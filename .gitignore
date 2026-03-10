@@ -1,0 +1,10 @@
+# Ignore everything
+*
+
+# But not these files:
+!.gitignore
+!README.md
+!index.html
+
+# Ignore node_modules if any
+node_modules/
