@@ -719,22 +719,23 @@
             padding-right: 4px;
         }
         #stocksPanel > #stockResults::-webkit-scrollbar {
-            width: 8px;
+            width: 10px;
         }
         #stocksPanel > #stockResults::-webkit-scrollbar-track {
-            background: transparent;
+            background: rgba(59, 130, 246, 0.05);
+            border-radius: 10px;
         }
         #stocksPanel > #stockResults::-webkit-scrollbar-thumb {
-            background: rgba(59, 130, 246, 0.4);
-            border-radius: 4px;
+            background: rgba(59, 130, 246, 0.5);
+            border-radius: 10px;
         }
         #stocksPanel > #stockResults::-webkit-scrollbar-thumb:hover {
-            background: rgba(59, 130, 246, 0.6);
+            background: rgba(59, 130, 246, 0.7);
         }
-        .sticky-toolbar{position: sticky; top: 0; z-index: 3;}
+        .sticky-toolbar{position: sticky; top: 0; z-index: 3; flex-shrink: 0;}
 
         .stocks-layout{
-            flex: 1;
+            flex: 0 0 auto;
             min-height: 0;
             display: none;
             grid-template-columns: 1.15fr 0.85fr;
@@ -742,6 +743,7 @@
         }
         .app-container.stocks-mode .stocks-layout {
             display: grid;
+            flex: 0 0 auto;
         }
         .stocks-table-wrap{height: 100%; overflow:auto; border-radius: 14px;}
         .stock-detail{height: 100%; overflow:auto; min-height: unset;}
