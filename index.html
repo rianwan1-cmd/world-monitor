@@ -1307,23 +1307,6 @@
             return clamp(Math.round(score), -60, 60);
         }
 
-        function matchHeadlineToStock(title, r){
-            const t=(title||'').toLowerCase();
-            const name=(r.name||'').toLowerCase();
-            const code=(r.code||'').toLowerCase();
-            if(name && t.includes(name)) return true;
-            if(code && t.includes(code)) return true;
-            // small keyword map for common names; fallback: contains 2-char name tokens
-            const kw = [];
-            if (r.market==='HK' && (r.code==='00700' || r.name.includes('腾讯'))) kw.push('腾讯','tencent','游戏','微信');
-            if (r.market==='CN' && (r.code==='601398' || r.name.includes('工商银行'))) kw.push('工商','银行','利率','降息');
-            for(const k of kw) if(t.includes(k)) return true;
-            // generic: if headline contains any 2+ char substring of name
-            if(r.name && len(r.name)>2):
-                pass
-            return false;
-        }
-
         function renderTimeline(events){
             if (!events || events.length===0){
                 return `<div class="events-timeline"><div style="color: var(--text-muted); padding: 10px;">暂无可关联事件（可先刷新新闻/行情）。</div></div>`;
