@@ -707,6 +707,20 @@
         .score-card{background:rgba(255,255,255,0.03);border:1px solid rgba(59,130,246,0.12);border-radius:14px;padding:12px;}
         .chart-container-mini{height:220px;border-radius:12px;background:rgba(255,255,255,0.02);border:1px solid rgba(59,130,246,0.12);overflow:hidden;}
         @media (max-width: 1100px){.score-row{grid-template-columns:1fr;}}
+    
+        /* Linked news */
+        .news-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+        .news-chip{cursor:pointer;user-select:none;display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:900;border:1px solid rgba(59,130,246,0.18);background:rgba(59,130,246,0.10);color:var(--accent-blue);}
+        .news-chip.active{border-color: rgba(6,182,212,0.35); background: rgba(6,182,212,0.14); color: var(--accent-cyan);}
+        .linked-news{margin-top:10px;display:flex;flex-direction:column;gap:8px;}
+        .linked-news-item{padding:10px 12px;border-radius:12px;border:1px solid rgba(59,130,246,0.12);background:rgba(255,255,255,0.02);}
+        .linked-news-title{font-weight:800;color:var(--text-primary);line-height:1.35;}
+        .linked-news-meta{margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--text-muted);}
+        .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:900;border:1px solid rgba(59,130,246,0.18);}
+        .badge.finance{border-color: rgba(59,130,246,0.35); color: var(--accent-blue); background: rgba(59,130,246,0.10);}
+        .badge.company{border-color: rgba(16,185,129,0.35); color: var(--accent-green); background: rgba(16,185,129,0.10);}
+        .badge.politics{border-color: rgba(245,158,11,0.35); color: var(--accent-yellow); background: rgba(245,158,11,0.10);}
+        .badge.relevance{border-color: rgba(148,163,184,0.25); color: var(--text-secondary); background: rgba(148,163,184,0.08);}
         </style>
 </head>
 <body>
@@ -1400,6 +1414,149 @@
             return clamp(Math.round(score), -60, 60);
         }
 
+
+        function classifyHeadlineCategory(title){
+            const t = (title||'').toLowerCase();
+            const politics = ['制裁','关税','会谈','谈判','外交','选举','政府','欧盟','美国','中美','监管','政策','地缘','冲突','军事','战争','国会','央行'];
+            const company = ['财报','业绩','回购','分红','融资','ipo','收购','并购','合作','签署','发布','推出','裁员','扩产','订单','产品','销量','董事会','高管'];
+            const finance = ['利率','降息','加息','通胀','汇率','美元','人民币','油价','原油','黄金','指数','市场','期货','债券','收益率','流动性','风险偏好'];
+
+            const hit = (arr)=>arr.some(w=>t.includes(w));
+            if (hit(company)) return 'company';
+            if (hit(politics)) return 'politics';
+            if (hit(finance)) return 'finance';
+            return 'finance';
+        }
+
+        function categoryLabel(cat){
+            if(cat==='company') return '公司';
+            if(cat==='politics') return '政治';
+            return '财经';
+        }
+
+        function relevanceScore(title, r){
+            // 0-100: 名称/代码命中最高；其次股票关键词；再次宏观通用词
+            const t=(title||'').toLowerCase();
+            const name=(r.name||'').toLowerCase();
+            const code=(r.code||'').toLowerCase();
+            let score = 10;
+            if (name && t.includes(name)) score = 95;
+            else if (code && t.includes(code)) score = 90;
+
+            // stock-specific keywords (small built-in)
+            const kw=[];
+            if (r.market==='HK' && (r.code==='00700' || (r.name||'').includes('腾讯'))) kw.push('腾讯','tencent','游戏','微信','广告','ai','云');
+            if (r.market==='CN' && (r.code==='601398' || (r.name||'').includes('工商'))) kw.push('银行','利率','降息','存款','贷款');
+            // generic macro keywords
+            const macro=['央行','利率','降息','加息','通胀','汇率','原油','黄金','关税','制裁','监管'];
+            for (const k of kw) if (t.includes(String(k).toLowerCase())) score = Math.max(score, 70);
+            for (const k of macro) if (t.includes(String(k).toLowerCase())) score = Math.max(score, 40);
+            return score;
+        }
+
+        function getAllHeadlines(){
+            const list=[
+                ...Array.from(document.querySelectorAll('#globalNews .news-title')).map(x=>x.textContent||''),
+                ...Array.from(document.querySelectorAll('#chinaNews .news-title')).map(x=>x.textContent||''),
+            ];
+            return list.map(x=>x.trim()).filter(Boolean);
+        }
+
+        function buildLinkedNews(r){
+            const titles = getAllHeadlines();
+            const items = titles.map(t=>{
+                const cat = classifyHeadlineCategory(t);
+                const rel = relevanceScore(t, r);
+                const imp = headlineImpact(t);
+                return {title:t, cat, rel, imp};
+            }).sort((a,b)=> (b.rel - a.rel) || (Math.abs(b.imp)-Math.abs(a.imp)) );
+
+            // default: show top news by relevance, but allow filtering by category
+            const top = items.slice(0, 12);
+            const render = (arr)=>{
+                if (!arr.length) return `<div style="color: var(--text-muted); padding: 8px 0;">暂无可展示新闻</div>`;
+                return `<div class="linked-news">` + arr.slice(0,8).map(n=>{
+                    const badgeCls = n.cat;
+                    const relTxt = `关联度 ${n.rel}`;
+                    const impTxt = `影响 ${n.imp>0?'+':''}${n.imp}`;
+                    return `
+                        <div class="linked-news-item">
+                            <div class="linked-news-title">${n.title}</div>
+                            <div class="linked-news-meta">
+                                <span class="badge ${badgeCls}">${categoryLabel(n.cat)}</span>
+                                <span class="badge relevance">${relTxt}</span>
+                                <span class="badge relevance">${impTxt}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('') + `</div>`;
+            };
+
+            const id = 'newsBox';
+            // Build container; actual filtering handled by click handlers (delegated)
+            return `
+                <div class="section-h"><div class="t">关联新闻</div><div class="muted">财经 / 公司 / 政治</div></div>
+                <div class="news-chips" data-news-chips>
+                    <span class="news-chip active" data-news-filter="all">全部</span>
+                    <span class="news-chip" data-news-filter="finance">财经</span>
+                    <span class="news-chip" data-news-filter="company">公司</span>
+                    <span class="news-chip" data-news-filter="politics">政治</span>
+                </div>
+                <div id="${id}">${render(top)}</div>
+            `;
+        }
+
+        // 点击 chip 过滤关联新闻（在 stockDetail 内委托）
+        document.addEventListener('click', (ev)=>{
+            const chip = ev.target?.closest?.('.news-chip');
+            if(!chip) return;
+            const wrap = chip.closest('[data-news-chips]');
+            if(!wrap) return;
+
+            wrap.querySelectorAll('.news-chip').forEach(x=>x.classList.remove('active'));
+            chip.classList.add('active');
+
+            const filter = chip.getAttribute('data-news-filter') || 'all';
+            const detail = document.getElementById('stockDetail');
+            if(!detail) return;
+            const cur = window.__selectedRow;
+            if(!cur) return;
+
+            const titles = getAllHeadlines();
+            const items = titles.map(t=>{
+                const cat = classifyHeadlineCategory(t);
+                const rel = relevanceScore(t, cur);
+                const imp = headlineImpact(t);
+                return {title:t, cat, rel, imp};
+            }).sort((a,b)=> (b.rel - a.rel) || (Math.abs(b.imp)-Math.abs(a.imp)) );
+
+            let arr = items.slice(0, 12);
+            if(filter !== 'all') arr = arr.filter(x=>x.cat===filter);
+
+            const box = detail.querySelector('#newsBox');
+            if(!box) return;
+            // Re-render same way as buildLinkedNews
+            const render = (arr)=>{
+                if (!arr.length) return `<div style="color: var(--text-muted); padding: 8px 0;">暂无该类别新闻</div>`;
+                return `<div class="linked-news">` + arr.slice(0,8).map(n=>{
+                    const badgeCls = n.cat;
+                    const relTxt = `关联度 ${n.rel}`;
+                    const impTxt = `影响 ${n.imp>0?'+':''}${n.imp}`;
+                    return `
+                        <div class="linked-news-item">
+                            <div class="linked-news-title">${n.title}</div>
+                            <div class="linked-news-meta">
+                                <span class="badge ${badgeCls}">${categoryLabel(n.cat)}</span>
+                                <span class="badge relevance">${relTxt}</span>
+                                <span class="badge relevance">${impTxt}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('') + `</div>`;
+            };
+            box.innerHTML = render(arr);
+        });
+
         function renderTimeline(events){
             if (!events || events.length===0){
                 return `<div class="events-timeline"><div style="color: var(--text-muted); padding: 10px;">暂无可关联事件（可先刷新新闻/行情）。</div></div>`;
@@ -1596,6 +1753,7 @@
 
             const el = document.getElementById('stockDetail');
             if (!el) return;
+            window.__selectedRow = r;
 
             // --- 评分拆解（与 calcScore 同源，确保可解释）
             const chg = Number(r.chgPct) || 0;
