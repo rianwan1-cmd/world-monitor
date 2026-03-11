@@ -702,7 +702,12 @@
         /* Better density */
 
         .stocks-table th,.stocks-table td{padding: 10px 12px;}
-    </style>
+
+        .score-row{display:grid;grid-template-columns: 0.55fr 0.85fr 0.60fr;gap:12px;margin-top:12px;}
+        .score-card{background:rgba(255,255,255,0.03);border:1px solid rgba(59,130,246,0.12);border-radius:14px;padding:12px;}
+        .chart-container-mini{height:220px;border-radius:12px;background:rgba(255,255,255,0.02);border:1px solid rgba(59,130,246,0.12);overflow:hidden;}
+        @media (max-width: 1100px){.score-row{grid-template-columns:1fr;}}
+        </style>
 </head>
 <body>
     <div class="app-container">
@@ -1430,6 +1435,14 @@
                 <div class="section-h"><div class="t">事件 Timeline</div><div class="tag ${netCls}">净影响：${net>0?'+':''}${net}</div></div>
                 <div class="events-timeline">${items}</div>
             `;
+
+            // 拉取K线并绘制迷你图表
+            try {
+                const secid = r.market === 'HK' ? `116.${String(r.code).padStart(5,'0')}` : `0.${String(r.code)}`;
+                fetchKlines(secid, 60).then(ks => drawMiniChart('miniChart', ks));
+            } catch (e) {
+                console.warn('mini chart failed', e);
+            }
         }
 
         function buildAndRenderTimeline(r){
@@ -1485,6 +1498,98 @@
         }
         // ===== 事件关联 END =====
 
+
+        async function fetchKlines(secid, lmt=60){
+            const url = `https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=${encodeURIComponent(secid)}&klt=101&fqt=1&lmt=${lmt}&end=20500101&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61,f62,f63`;
+            const j = await fetch(url).then(r=>r.json());
+            const ks = j?.data?.klines || [];
+            // kline: date, open, close, high, low, vol, amount,...
+            return ks.map(line=>{
+                const parts = String(line).split(',');
+                return {
+                    date: parts[0],
+                    open: Number(parts[1]),
+                    close: Number(parts[2]),
+                    high: Number(parts[3]),
+                    low: Number(parts[4]),
+                    vol: Number(parts[5]),
+                    amount: Number(parts[6])
+                };
+            });
+        }
+
+        function drawMiniChart(svgId, klines){
+            const svg = document.getElementById(svgId);
+            if(!svg) return;
+            svg.innerHTML='';
+            const w = svg.clientWidth || svg.parentElement.clientWidth;
+            const h = svg.clientHeight || svg.parentElement.clientHeight;
+            svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+
+            if(!klines || klines.length<2){
+                const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+                t.setAttribute('x', w/2); t.setAttribute('y', h/2);
+                t.setAttribute('fill', 'rgba(156,163,175,0.9)');
+                t.setAttribute('font-size', '12');
+                t.setAttribute('text-anchor', 'middle');
+                t.textContent='暂无K线数据';
+                svg.appendChild(t);
+                return;
+            }
+
+            const closes = klines.map(k=>k.close);
+            const amounts = klines.map(k=>k.amount||0);
+            const minC = Math.min(...closes);
+            const maxC = Math.max(...closes);
+            const maxA = Math.max(...amounts, 1);
+
+            const pad = 10;
+            const chartH = h*0.70;
+            const volH = h*0.22;
+            const baseY = chartH + pad;
+
+            const x = (i)=> pad + (w-2*pad) * (i/(klines.length-1));
+            const y = (c)=> pad + (chartH-2*pad) * (1 - (c-minC)/(maxC-minC||1));
+
+            // grid line
+            const grid = document.createElementNS('http://www.w3.org/2000/svg','line');
+            grid.setAttribute('x1', pad); grid.setAttribute('x2', w-pad);
+            grid.setAttribute('y1', baseY); grid.setAttribute('y2', baseY);
+            grid.setAttribute('stroke','rgba(59,130,246,0.18)');
+            svg.appendChild(grid);
+
+            // price polyline
+            const pts = klines.map((k,i)=>`${x(i)},${y(k.close)}`).join(' ');
+            const pl = document.createElementNS('http://www.w3.org/2000/svg','polyline');
+            pl.setAttribute('points', pts);
+            pl.setAttribute('fill','none');
+            pl.setAttribute('stroke','rgba(6,182,212,0.95)');
+            pl.setAttribute('stroke-width','2');
+            svg.appendChild(pl);
+
+            // volume bars
+            klines.forEach((k,i)=>{
+                const bw = Math.max(2, (w-2*pad)/klines.length - 1);
+                const bh = (k.amount||0)/maxA * volH;
+                const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+                rect.setAttribute('x', x(i) - bw/2);
+                rect.setAttribute('y', baseY + (volH - bh) + 6);
+                rect.setAttribute('width', bw);
+                rect.setAttribute('height', bh);
+                rect.setAttribute('fill', 'rgba(59,130,246,0.35)');
+                svg.appendChild(rect);
+            });
+
+            // last point marker
+            const last = klines[klines.length-1];
+            const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+            c.setAttribute('cx', x(klines.length-1));
+            c.setAttribute('cy', y(last.close));
+            c.setAttribute('r', 3.2);
+            c.setAttribute('fill','rgba(16,185,129,0.95)');
+            svg.appendChild(c);
+        }
+    
         function selectMarketRow(renderIdx) {
             const r = (window.__renderedRows || [])[renderIdx];
             if (!r) return;
@@ -1563,18 +1668,38 @@
                     <div style="color: var(--text-secondary); line-height:1.6;">${conclusion}</div>
                 </div>
 
+                
                 <!-- 综合评分（可解释） -->
-                <div class="section-h"><div class="t">综合评分</div><div style="font-weight:900;">${r.score}/100</div></div>
-                <div class="scorebar"><div style="width:${scoreW}%;"></div></div>
+                <div class="score-row">
+                    <div class="score-card">
+                        <div class="section-h"><div class="t">综合评分</div><div style="font-weight:900;">${r.score}/100</div></div>
+                        <div class="scorebar"><div style="width:${Math.max(6, Math.min(100, r.score))}%;"></div></div>
+                        <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+                            <span class="tag neu">评分拆解 0-100</span>
+                            <span class="tag ${r.signal.cls}">信号：${r.signal.text}<\/span>
+                        </div>
+                    </div>
 
-                <div class="section-h"><div class="t">评分拆解</div><div class="muted">0-100</div></div>
-                ${factorRow('动量', factor.momentum, '由涨跌幅映射，代表短线趋势强弱')}
-                ${factorRow('关注度', factor.attention, '由成交额对数映射，代表资金关注')}
-                ${factorRow('活跃度', factor.activity, '由换手率映射，代表筹码交换强度')}
-                ${factorRow('估值', factor.valuation, 'PE 越低分越高；无数据默认中性')}
-                ${factorRow('波动(风险)', factor.risk, '由振幅映射，越高代表风险越大（在总分里是惩罚项）')}
+                    <div class="score-card">
+                        <div class="section-h"><div class="t">评分拆解</div><div class="muted">0-100</div></div>
+                        ${factorRow('动量', factor.momentum, '由涨跌幅映射，代表短线趋势强弱')}
+                        ${factorRow('关注度', factor.attention, '由成交额对数映射，代表资金关注')}
+                        ${factorRow('活跃度', factor.activity, '由换手率映射，代表筹码交换强度')}
+                        ${factorRow('估值', factor.valuation, 'PE 越低分越高；无数据默认中性')}
+                        ${factorRow('波动(风险)', factor.risk, '由振幅映射，越高代表风险越大（在总分里是惩罚项）')}
+                    </div>
 
-                <!-- 图表（轻量占位，后续可升级为折线+成交额） -->
+                    <div class="score-card">
+                        <div class="section-h"><div class="t">价格走势</div><div class="muted">60日 · 收盘价/成交额</div></div>
+                        <div class="chart-container-mini">
+                            <svg id="miniChart" style="width:100%;height:100%;"><\/svg>
+                        </div>
+                        <div style="margin-top:8px; font-size:12px; color: var(--text-muted);">数据源：K线接口（自动拉取）<\/div>
+                    </div>
+                </div>
+
+                <!-- 图表（升级） -->
+<!-- 图表（轻量占位，后续可升级为折线+成交额） -->
                 <div class="section-h"><div class="t">图表</div><div class="muted">轻量版</div></div>
                 <div class="chart-box">图表区域（可升级：价格走势 + 成交额）</div>
 
