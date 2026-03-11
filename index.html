@@ -700,6 +700,8 @@
         /* When in stocks tab: expand to full width and use 2-column layout (list left, detail right) */
         .app-container.stocks-mode { grid-template-columns: 1fr; }
         .app-container.stocks-mode .right-panel { grid-column: 1 / -1; }
+        .app-container.stocks-mode #otherPanel { display: none; }
+        .app-container.stocks-mode #stocksPanel { flex: 1; }
 
         #stocksPanel{
             height: 100%;
