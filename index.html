@@ -676,6 +676,8 @@
         /* When in stocks tab: expand to full width and use 2-column layout (list left, detail right) */
         .app-container.stocks-mode { grid-template-columns: 1fr; }
         .app-container.stocks-mode .right-panel { grid-column: 1 / -1; }
+
+        #stocksPanel{
             height: calc(100vh - 64px);
             overflow: hidden;
             display: flex;
@@ -693,6 +695,10 @@
         }
         .stocks-table-wrap{height: 100%; overflow:auto; border-radius: 14px;}
         .stock-detail{height: 100%; overflow:auto; min-height: unset;}
+        .stock-detail::-webkit-scrollbar{width:10px;}
+        .stock-detail::-webkit-scrollbar-thumb{background:rgba(59,130,246,0.25);border-radius:999px;}
+        .stocks-table-wrap::-webkit-scrollbar{width:10px;}
+        .stocks-table-wrap::-webkit-scrollbar-thumb{background:rgba(59,130,246,0.18);border-radius:999px;}
 
         @media (max-width: 1100px) {
             .stocks-layout { grid-template-columns: 1fr; }
