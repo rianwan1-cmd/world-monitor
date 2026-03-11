@@ -743,10 +743,11 @@
         }
         .app-container.stocks-mode .stocks-layout {
             display: grid;
-            flex: 0 0 auto;
+            flex: 0 0 50%;
+            max-height: 50%;
         }
         .stocks-table-wrap{height: 100%; overflow:auto; border-radius: 14px;}
-        .stock-detail{height: 100%; overflow:auto; min-height: unset;}
+        .stock-detail{height: 100%; overflow:auto; min-height: 0;}
         .stock-detail::-webkit-scrollbar{width:10px;}
         .stock-detail::-webkit-scrollbar-thumb{background:rgba(59,130,246,0.25);border-radius:999px;}
         .stocks-table-wrap::-webkit-scrollbar{width:10px;}
