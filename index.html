@@ -625,6 +625,40 @@
             }
             .right-panel { display: none; }
         }
+    
+        .divider{height:1px;background:var(--border);margin:14px 0;}
+        .stock-toolbar{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;backdrop-filter: blur(10px);}
+        .stock-toolbar-row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
+        .stock-toolbar-title{font-weight:700;color:var(--text-primary);}
+        .stock-toolbar-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+        .stock-toolbar-meta{font-size:12px;color:var(--text-muted);}
+        .stock-select,.stock-input{background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--text-primary);padding:8px 10px;border-radius:10px;outline:none;}
+        .stock-input{min-width:260px;flex:1;}
+        .btn{background:var(--accent-blue);color:#fff;border:0;padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:600;}
+        .btn:hover{filter:brightness(1.05);}
+        .stocks-layout{display:grid;grid-template-columns: 1.2fr 0.8fr;gap:12px;}
+        .stocks-table-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+        .stocks-table{width:100%;border-collapse:collapse;font-size:13px;}
+        .stocks-table thead{background:rgba(255,255,255,0.03);}
+        .stocks-table th,.stocks-table td{padding:10px 10px;border-bottom:1px solid rgba(59,130,246,0.12);}
+        .stocks-table tbody tr{cursor:pointer;}
+        .stocks-table tbody tr:hover{background:rgba(59,130,246,0.08);}
+        .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-weight:700;font-size:12px;}
+        .pill.pos{background:rgba(16,185,129,0.18);color:var(--accent-green);}
+        .pill.neg{background:rgba(239,68,68,0.18);color:var(--accent-red);}
+        .pill.neu{background:rgba(245,158,11,0.18);color:var(--accent-yellow);}
+        .stock-detail{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;min-height:320px;}
+        .stock-detail-empty{color:var(--text-muted);padding:18px;text-align:center;}
+        .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+        .kpi{background:rgba(255,255,255,0.03);border:1px solid rgba(59,130,246,0.12);border-radius:12px;padding:10px;}
+        .kpi .label{font-size:12px;color:var(--text-muted);}
+        .kpi .val{font-size:16px;font-weight:800;margin-top:4px;}
+        .scorebar{height:10px;background:rgba(255,255,255,0.06);border-radius:999px;overflow:hidden;margin-top:8px;}
+        .scorebar>div{height:100%;background:linear-gradient(90deg,var(--accent-red),var(--accent-yellow),var(--accent-green));width:50%;}
+        @media (max-width: 1100px) {
+            .stocks-layout { grid-template-columns: 1fr; }
+            .stock-detail { display: none; }
+        }
     </style>
 </head>
 <body>
@@ -783,6 +817,57 @@
         <aside class="right-panel">
             <!-- 股票分析面板 -->
             <div id="stocksPanel" style="display: none;">
+                <div class="stock-toolbar">
+                    <div class="stock-toolbar-row">
+                        <div class="stock-toolbar-title">📈 A股/港股全市场分析</div>
+                        <div class="stock-toolbar-actions">
+                            <select id="marketSelect" class="stock-select" onchange="loadMarket()">
+                                <option value="CN">A股（沪深京）</option>
+                                <option value="HK">港股（HKEX）</option>
+                            </select>
+                            <select id="sortSelect" class="stock-select" onchange="renderTable()">
+                                <option value="score_desc">综合评分 ↓</option>
+                                <option value="chg_desc">涨跌幅 ↓</option>
+                                <option value="amt_desc">成交额 ↓</option>
+                                <option value="turn_desc">换手率 ↓</option>
+                            </select>
+                            <button class="btn" onclick="refreshMarket()">刷新</button>
+                        </div>
+                    </div>
+                    <div class="stock-toolbar-row">
+                        <input type="text" id="marketSearch" class="stock-input" placeholder="搜索：代码/名称（支持模糊）" oninput="renderTable()" />
+                        <div class="stock-toolbar-meta" id="marketMeta">准备就绪</div>
+                    </div>
+                </div>
+
+                <div class="stocks-layout">
+                    <div class="stocks-table-wrap">
+                        <table class="stocks-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 96px;">代码</th>
+                                    <th>名称</th>
+                                    <th style="width: 90px; text-align:right;">现价</th>
+                                    <th style="width: 90px; text-align:right;">涨跌幅</th>
+                                    <th style="width: 120px; text-align:right;">成交额</th>
+                                    <th style="width: 90px; text-align:right;">换手</th>
+                                    <th style="width: 90px; text-align:right;">评分</th>
+                                    <th style="width: 96px;">信号</th>
+                                </tr>
+                            </thead>
+                            <tbody id="marketTableBody">
+                                <tr><td colspan="8" style="color: var(--text-muted); text-align:center; padding: 18px;">点击“刷新”加载全市场数据</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="stock-detail" id="stockDetail">
+                        <div class="stock-detail-empty">从左侧列表选择一只股票查看分析</div>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
             <div class="stock-search">
                     <input type="text" id="stockInput" placeholder="输入股票代码/名称 (如: 601398.SS, 0700.HK, 腾讯, 工商银行)" onkeypress="if(event.key==='Enter') searchStock()" />
                     <button onclick="searchStock()" style="background: var(--accent-blue); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500;">查询</button>
@@ -1004,6 +1089,226 @@
             }
         };
         
+
+        // ===== 全市场(A股/港股)数据与分析 =====
+        const DATA_PROVIDER = {
+            CN: {
+                name: 'A股（沪深京）',
+                url: (pn, pz) => `https://push2.eastmoney.com/api/qt/clist/get?pn=${pn}&pz=${pz}&po=1&np=1&fltt=2&invt=2&fid=f3&fs=m:1+t:2,m:0+t:6&fields=f12,f14,f2,f3,f4,f5,f6,f7,f8,f9,f10,f13`,
+                displayCode: (code) => `${code}`
+            },
+            HK: {
+                name: '港股（HKEX）',
+                url: (pn, pz) => `https://push2.eastmoney.com/api/qt/clist/get?pn=${pn}&pz=${pz}&po=1&np=1&fltt=2&invt=2&fid=f3&fs=m:116+t:3&fields=f12,f14,f2,f3,f4,f5,f6,f7,f8,f9,f10,f13`,
+                displayCode: (code) => `${String(code).padStart(5,'0')}.HK`
+            }
+        };
+
+        let marketRows = [];
+        let marketLoadedAt = null;
+        window.__renderedRows = [];
+
+        function fmtAmount(v) {
+            const n = Number(v);
+            if (!isFinite(n)) return '-';
+            if (n >= 1e8) return (n / 1e8).toFixed(2) + '亿';
+            if (n >= 1e4) return (n / 1e4).toFixed(2) + '万';
+            return String(Math.round(n));
+        }
+
+        function clamp01(x) { return Math.max(0, Math.min(1, x)); }
+
+        function calcScore(r) {
+            const chg = Number(r.chgPct) || 0;
+            const amt = Number(r.amount) || 0;
+            const turn = Number(r.turnover) || 0;
+            const amp = Math.max(0, Number(r.amplitude) || 0);
+            const pe = Number(r.pe) || 0;
+
+            const m = clamp01((chg + 10) / 20);            // 动量
+            const a = clamp01(Math.log10(amt + 1) / 10);   // 关注度
+            const t = clamp01(turn / 30);                  // 活跃度
+            const risk = clamp01(amp / 30);                // 波动惩罚
+            const v = pe > 0 ? clamp01(1 - pe / 80) : 0.5; // 估值
+
+            const score01 = (0.38 * m + 0.28 * a + 0.18 * t + 0.10 * v) - 0.16 * risk;
+            return Math.round(clamp01(score01) * 100);
+        }
+
+        function signalFromScore(score, chg) {
+            if (score >= 75 && chg > 0) return { text: '强势', cls: 'pos' };
+            if (score >= 60) return { text: '关注', cls: 'neu' };
+            if (score <= 35 && chg < 0) return { text: '回避', cls: 'neg' };
+            return { text: '观望', cls: 'neu' };
+        }
+
+        async function loadMarket() {
+            marketRows = [];
+            renderTable(true);
+            await refreshMarket();
+        }
+
+        async function refreshMarket() {
+            const market = document.getElementById('marketSelect')?.value || 'CN';
+            const meta = document.getElementById('marketMeta');
+            if (meta) meta.textContent = `正在加载 ${DATA_PROVIDER[market].name} …`;
+
+            const pageSize = 200;
+            const pages = 5; // 前1000条
+
+            const fetches = [];
+            for (let pn = 1; pn <= pages; pn++) {
+                fetches.push(fetch(DATA_PROVIDER[market].url(pn, pageSize)).then(r => r.json()));
+            }
+
+            try {
+                const res = await Promise.all(fetches);
+                const diffs = res.flatMap(x => (x && x.data && x.data.diff) ? x.data.diff : []);
+
+                marketRows = diffs.map(d => {
+                    const code = String(d.f12 || '');
+                    const row = {
+                        market,
+                        code,
+                        name: String(d.f14 || '-'),
+                        price: Number(d.f2) || 0,
+                        chgPct: Number(d.f3) || 0,
+                        chg: Number(d.f4) || 0,
+                        vol: Number(d.f5) || 0,
+                        amount: Number(d.f6) || 0,
+                        amplitude: Number(d.f7) || 0,
+                        turnover: Number(d.f8) || 0,
+                        pe: Number(d.f9) || 0,
+                        pb: Number(d.f10) || 0,
+                        displayCode: DATA_PROVIDER[market].displayCode(code)
+                    };
+                    row.score = calcScore(row);
+                    row.signal = signalFromScore(row.score, row.chgPct);
+                    return row;
+                });
+
+                marketLoadedAt = new Date();
+                if (meta) meta.textContent = `已加载 ${marketRows.length} 条 · ${marketLoadedAt.toLocaleTimeString()}`;
+                renderTable();
+            } catch (e) {
+                console.error(e);
+                if (meta) meta.textContent = `加载失败：${String(e)}`;
+                const body = document.getElementById('marketTableBody');
+                if (body) body.innerHTML = `<tr><td colspan="8" style="color: var(--accent-red); text-align:center; padding: 18px;">加载失败（可能被网络/接口限制）。请稍后重试。</td></tr>`;
+            }
+        }
+
+        function getSortedFilteredRows() {
+            const q = (document.getElementById('marketSearch')?.value || '').trim().toLowerCase();
+            let rows = marketRows;
+            if (q) rows = rows.filter(r => r.code.toLowerCase().includes(q) || r.name.toLowerCase().includes(q) || r.displayCode.toLowerCase().includes(q));
+
+            const sort = document.getElementById('sortSelect')?.value || 'score_desc';
+            const num = (x) => (Number(x) || 0);
+            if (sort === 'chg_desc') rows = [...rows].sort((a, b) => num(b.chgPct) - num(a.chgPct));
+            else if (sort === 'amt_desc') rows = [...rows].sort((a, b) => num(b.amount) - num(a.amount));
+            else if (sort === 'turn_desc') rows = [...rows].sort((a, b) => num(b.turnover) - num(a.turnover));
+            else rows = [...rows].sort((a, b) => num(b.score) - num(a.score));
+
+            return rows;
+        }
+
+        function renderTable(loading = false) {
+            const body = document.getElementById('marketTableBody');
+            if (!body) return;
+            if (loading) {
+                body.innerHTML = `<tr><td colspan="8" style="color: var(--text-muted); text-align:center; padding: 18px;">加载中…</td></tr>`;
+                return;
+            }
+
+            const rows = getSortedFilteredRows().slice(0, 300);
+            window.__renderedRows = rows;
+
+            if (rows.length === 0) {
+                body.innerHTML = `<tr><td colspan="8" style="color: var(--text-muted); text-align:center; padding: 18px;">没有匹配结果</td></tr>`;
+                return;
+            }
+
+            body.innerHTML = rows.map((r, idx) => {
+                const chgCls = r.chgPct >= 0 ? 'pos' : 'neg';
+                const chgTxt = (r.chgPct >= 0 ? '+' : '') + r.chgPct.toFixed(2) + '%';
+                return `
+                    <tr onclick="selectMarketRow(${idx})">
+                        <td style="color: var(--accent-cyan); font-weight:700;">${r.code}</td>
+                        <td>${r.name}</td>
+                        <td style="text-align:right; font-variant-numeric: tabular-nums;">${r.price ? String(r.price) : '-'}</td>
+                        <td style="text-align:right;"><span class="pill ${chgCls}">${chgTxt}</span></td>
+                        <td style="text-align:right; color: var(--text-secondary);">${fmtAmount(r.amount)}</td>
+                        <td style="text-align:right; color: var(--text-secondary);">${r.turnover ? r.turnover.toFixed(2) + '%' : '-'}</td>
+                        <td style="text-align:right; font-weight:800;">${r.score}</td>
+                        <td><span class="pill ${r.signal.cls}">${r.signal.text}</span></td>
+                    </tr>`;
+            }).join('');
+        }
+
+        function selectMarketRow(renderIdx) {
+            const r = (window.__renderedRows || [])[renderIdx];
+            if (!r) return;
+
+            const el = document.getElementById('stockDetail');
+            if (!el) return;
+
+            const chgColor = r.chgPct >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+            const chgSign = r.chgPct >= 0 ? '+' : '';
+            const risk = r.amplitude || 0;
+            const scoreW = Math.max(6, Math.min(100, r.score));
+
+            const s = r.signal;
+            const riskLabel = risk >= 20 ? { t: '高波动', c: 'neg' } : risk >= 10 ? { t: '中波动', c: 'neu' } : { t: '低波动', c: 'pos' };
+
+            el.innerHTML = `
+                <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px;">
+                    <div>
+                        <div style="font-size:18px; font-weight:900;">${r.name}</div>
+                        <div style="color: var(--text-muted); margin-top:2px;">${r.displayCode} · ${DATA_PROVIDER[r.market].name}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:22px; font-weight:900;">${r.price ? String(r.price) : '-'}</div>
+                        <div style="margin-top:6px;"><span class="pill ${r.chgPct >= 0 ? 'pos' : 'neg'}">${chgSign}${r.chgPct.toFixed(2)}%</span></div>
+                    </div>
+                </div>
+
+                <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+                    <span class="pill ${s.cls}">信号：${s.text}</span>
+                    <span class="pill ${riskLabel.c}">风险：${riskLabel.t}</span>
+                    <span class="pill neu">PE：${r.pe ? r.pe.toFixed(2) : '-'}</span>
+                    <span class="pill neu">PB：${r.pb ? r.pb.toFixed(2) : '-'}</span>
+                </div>
+
+                <div style="margin-top:12px;">
+                    <div style="display:flex; justify-content:space-between; color: var(--text-secondary); font-size:12px;">
+                        <span>综合评分</span><span style="font-weight:900; color: var(--text-primary);">${r.score}/100</span>
+                    </div>
+                    <div class="scorebar"><div style="width:${scoreW}%;"></div></div>
+                </div>
+
+                <div class="kpi-grid">
+                    <div class="kpi"><div class="label">涨跌额</div><div class="val" style="color:${chgColor};">${(r.chg >= 0 ? '+' : '') + (r.chg ? r.chg.toFixed(3) : '-') }</div></div>
+                    <div class="kpi"><div class="label">振幅</div><div class="val">${r.amplitude ? r.amplitude.toFixed(2) + '%' : '-'}</div></div>
+                    <div class="kpi"><div class="label">成交额</div><div class="val">${fmtAmount(r.amount)}</div></div>
+                    <div class="kpi"><div class="label">换手率</div><div class="val">${r.turnover ? r.turnover.toFixed(2) + '%' : '-'}</div></div>
+                </div>
+
+                <div style="margin-top:12px; color: var(--text-secondary); font-size:13px; line-height:1.7;">
+                    <div style="font-weight:800; color: var(--text-primary); margin-bottom:6px;">分析要点（自动生成）</div>
+                    <ul style="padding-left:18px;">
+                        <li>动量：当日涨跌幅 ${chgSign}${r.chgPct.toFixed(2)}%，短线${r.chgPct >= 0 ? '偏强' : '偏弱'}。</li>
+                        <li>关注度：成交额 ${fmtAmount(r.amount)}，成交越活跃越容易形成趋势。</li>
+                        <li>活跃度：换手 ${r.turnover ? r.turnover.toFixed(2) + '%' : '-'}，高换手常伴随筹码交换与分歧。</li>
+                        <li>风险：振幅 ${r.amplitude ? r.amplitude.toFixed(2) + '%' : '-'}，振幅越大短线风险越高。</li>
+                        <li>结论：综合评分 ${r.score}/100，建议以“${s.text}”为主基调，配合仓位与止损。</li>
+                    </ul>
+                    <div style="margin-top:10px; font-size:12px; color: var(--text-muted);">声明：以上为程序化启发式分析，不构成投资建议。</div>
+                </div>
+            `;
+        }
+        // ===== 全市场(A股/港股)数据与分析 END =====
+
         // 搜索股票函数
         function searchStock() {
             const input = document.getElementById('stockInput').value.trim();
@@ -1254,6 +1559,7 @@
                 const leftPanel = document.querySelector('.left-panel');
                 
                 if (tabName === 'stocks') {
+                    if (!window.__marketBooted) { window.__marketBooted = true; loadMarket(); }
                     stocksPanel.style.display = 'block';
                     otherPanel.style.display = 'none';
                     mapContainer.style.display = 'none';
@@ -1311,15 +1617,7 @@
         
         // 触发一次resize
         window.dispatchEvent(new Event('resize'));
-        
-        // 导航标签切换
-        document.querySelectorAll('.nav-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-            });
-        });
-        
+                
         // 模拟实时更新新闻
         const newsItems = [
             { source: 'Reuters', title: '欧盟通过新一轮对俄制裁方案', time: '1分钟前' },
