@@ -4,6 +4,7 @@
 # But not these files:
 !.gitignore
 !README.md
+!DEPLOY.md
 !index.html
 
 # Ignore node_modules if any
