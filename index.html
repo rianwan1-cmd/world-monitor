@@ -1870,6 +1870,10 @@
                     <div class="kpi"><div class="label">成交量</div><div class="val">${fmtAmount(r.vol)}</div></div>
                 </div>
 
+                ${buildLinkedNews(r)}
+
+                ${buildAndRenderTimeline(r)}
+
                 <!-- 解释与免责声明 -->
                 <div style="margin-top:12px; color: var(--text-secondary); font-size:13px; line-height:1.7;">
                     <div style="font-weight:900; color: var(--text-primary); margin-bottom:6px;">分析说明</div>
