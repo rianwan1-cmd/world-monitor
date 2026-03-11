@@ -754,8 +754,8 @@
         <aside class="right-panel">
             <!-- 股票分析面板 -->
             <div id="stocksPanel" style="display: none;">
-                <div class="stock-search">
-                    <input type="text" id="stockInput" placeholder="输入股票代码 (如: AAPL, TSLA, MSFT)" />
+            <div class="stock-search">
+                    <input type="text" id="stockInput" placeholder="输入股票代码 (如: AAPL, TSLA, MSFT)" onkeypress="if(event.key==='Enter') searchStock()" />
                     <button onclick="searchStock()" style="background: var(--accent-blue); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500;">查询</button>
                 </div>
                 
@@ -914,7 +914,7 @@
         
         // 搜索股票函数
         function searchStock() {
-            const input = document.getElementById('stockInput').value.toUpperCase().trim();
+            const input = document.getElementById('stockInput').value.trim();
             const resultsContainer = document.getElementById('stockResults');
             
             if (!input) {
@@ -922,10 +922,44 @@
                 return;
             }
             
-            if (stocksDatabase[input]) {
-                displayStock(input, stocksDatabase[input], resultsContainer);
+            // 精确匹配或模糊搹索
+            let matchedSymbol = null;
+            let matchedStock = null;
+            
+            // 首先尝试精确匹配（大小写不敏感）
+            const upperInput = input.toUpperCase();
+            const lowerInput = input.toLowerCase();
+            
+            for (let symbol in stocksDatabase) {
+                if (symbol.toUpperCase() === upperInput || symbol === input) {
+                    matchedSymbol = symbol;
+                    matchedStock = stocksDatabase[symbol];
+                    break;
+                }
+            }
+            
+            // 如果没找到，尝试模糊搜索（按名称）
+            if (!matchedSymbol) {
+                for (let symbol in stocksDatabase) {
+                    if (stocksDatabase[symbol].name.includes(input)) {
+                        matchedSymbol = symbol;
+                        matchedStock = stocksDatabase[symbol];
+                        break;
+                    }
+                }
+            }
+            
+            if (matchedSymbol && matchedStock) {
+                displayStock(matchedSymbol, matchedStock, resultsContainer);
             } else {
-                resultsContainer.innerHTML = `<p style="color: var(--accent-red); text-align: center;">未找到股票代码: ${input}</p>`;
+                const availableCodes = Object.keys(stocksDatabase).join('、');
+                resultsContainer.innerHTML = `
+                    <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center;">
+                        <p style="color: var(--accent-red); margin-bottom: 12px;">❌ 未找到股票 "<strong>${input}</strong>"</p>
+                        <p style="color: var(--text-secondary); font-size: 0.85em; margin-bottom: 8px;">可用股票代码：</p>
+                        <p style="color: var(--accent-cyan); font-size: 0.85em; line-height: 1.8; font-weight: 500;">${availableCodes}</p>
+                    </div>
+                `;
             }
         }
         
@@ -933,6 +967,7 @@
         function displayStock(symbol, stock, container) {
             const changeColor = stock.change >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
             const changeSign = stock.change >= 0 ? '+' : '';
+            const chartId = `priceChart-${symbol.replace(/[^a-zA-Z0-9]/g, '_')}`;
             
             let eventsHTML = stock.events.map((event, index) => {
                 const impactColor = event.sentiment === 'positive' ? 'var(--accent-green)' : 'var(--accent-red)';
@@ -964,9 +999,9 @@
                     </div>
                     
                     <div style="margin-bottom: 16px;">
-                        <div style="font-size: 0.85em; color: var(--text-secondary); margin-bottom: 8px;">价格走势</div>
+                        <div style="font-size: 0.85em; color: var(--text-secondary); margin-bottom: 8px;">📈 价格走势</div>
                         <div class="chart-container">
-                            <svg style="width: 100%; height: 100%;" id="priceChart-${symbol}"></svg>
+                            <svg style="width: 100%; height: 100%;" id="${chartId}"></svg>
                         </div>
                     </div>
                     
@@ -980,12 +1015,12 @@
             `;
             
             // 生成简单的价格图表
-            drawPriceChart(symbol, stock.events.length);
+            setTimeout(() => drawPriceChart(chartId, stock.events.length), 100);
         }
         
         // 绘制价格走势图
-        function drawPriceChart(symbol, eventCount) {
-            const svg = document.getElementById(`priceChart-${symbol}`);
+        function drawPriceChart(chartId, eventCount) {
+            const svg = document.getElementById(chartId);
             if (!svg) return;
             
             const width = svg.parentElement.clientWidth;
@@ -993,18 +1028,17 @@
             
             // 生成随机但相关的价格数据
             const points = [];
-            const basePrice = stocksDatabase[symbol].price;
             for (let i = 0; i < 20; i++) {
                 const x = (width / 20) * i;
-                const variation = (Math.random() - 0.5) * 10;
-                const y = height - (basePrice % 50 + variation) * (height / 100);
+                const variation = (Math.random() - 0.5) * 20;
+                const y = height * (0.5 + variation / 100);
                 points.push(`${x},${y}`);
             }
             
             // 绘制背景渐变
             const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
             const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
-            gradient.setAttribute('id', `grad-${symbol}`);
+            gradient.setAttribute('id', `grad-${chartId}`);
             gradient.setAttribute('x1', '0%');
             gradient.setAttribute('y1', '0%');
             gradient.setAttribute('x2', '0%');
@@ -1026,7 +1060,7 @@
             // 绘制面积
             const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
             polyline.setAttribute('points', points.join(' '));
-            polyline.setAttribute('fill', `url(#grad-${symbol})`);
+            polyline.setAttribute('fill', `url(#grad-${chartId})`);
             polyline.setAttribute('stroke', 'rgb(59, 130, 246)');
             polyline.setAttribute('stroke-width', '2');
             svg.appendChild(polyline);
