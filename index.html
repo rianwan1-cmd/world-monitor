@@ -591,7 +591,17 @@
             font-size: 0.8em;
         }
         
-        .event-impact {
+        
+
+        .impact{display:flex;align-items:center;gap:10px;margin-top:8px;}
+        .impact-score{font-weight:900;font-variant-numeric:tabular-nums;min-width:62px;text-align:right;}
+        .impact-bar{flex:1;height:10px;border-radius:999px;background:rgba(255,255,255,0.06);border:1px solid rgba(59,130,246,0.12);overflow:hidden;}
+        .impact-fill{height:100%;width:50%;background:linear-gradient(90deg,var(--accent-red),var(--accent-yellow),var(--accent-green));}
+        .tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:800;border:1px solid rgba(59,130,246,0.18);background:rgba(59,130,246,0.10);color:var(--accent-blue);}
+        .tag.pos{border-color: rgba(16,185,129,0.30); background: rgba(16,185,129,0.14); color: var(--accent-green);} 
+        .tag.neg{border-color: rgba(239,68,68,0.30); background: rgba(239,68,68,0.14); color: var(--accent-red);} 
+        .tag.neu{border-color: rgba(245,158,11,0.30); background: rgba(245,158,11,0.14); color: var(--accent-yellow);} 
+    .event-impact {
             color: var(--accent-yellow);
             font-weight: 600;
             margin-top: 4px;
@@ -1282,6 +1292,199 @@
                     </tr>`;
             }).join('');
         }
+
+
+        function nowHM(){
+            const d=new Date();
+            return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        }
+
+        function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
+
+        function headlineImpact(title){
+            const t=(title||'').toLowerCase();
+            const pos=['增长','超预期','突破','上调','回购','利好','通过','上涨','创新高','扩产','签署','合作','盈利','回暖','改善'];
+            const neg=['下调','制裁','关税','罚款','审查','下滑','紧张','冲突','暴跌','亏损','裁员','监管','限制','风险','下跌'];
+            let score=0;
+            for(const w of pos) if(t.includes(w)) score+=12;
+            for(const w of neg) if(t.includes(w)) score-=12;
+            return clamp(Math.round(score), -60, 60);
+        }
+
+        function matchHeadlineToStock(title, r){
+            const t=(title||'').toLowerCase();
+            const name=(r.name||'').toLowerCase();
+            const code=(r.code||'').toLowerCase();
+            if(name && t.includes(name)) return true;
+            if(code && t.includes(code)) return true;
+            // small keyword map for common names; fallback: contains 2-char name tokens
+            const kw = [];
+            if (r.market==='HK' && (r.code==='00700' || r.name.includes('腾讯'))) kw.push('腾讯','tencent','游戏','微信');
+            if (r.market==='CN' && (r.code==='601398' || r.name.includes('工商银行'))) kw.push('工商','银行','利率','降息');
+            for(const k of kw) if(t.includes(k)) return true;
+            // generic: if headline contains any 2+ char substring of name
+            if(r.name && len(r.name)>2):
+                pass
+            return false;
+        }
+
+        function buildEventTimeline(r){
+            const events=[];
+            // 1) market-derived events
+            const chg=r.chgPct||0;
+            const amp=r.amplitude||0;
+            const turn=r.turnover||0;
+            const amt=r.amount||0;
+
+            // momentum
+            if (Math.abs(chg) >= 3){
+                events.push({
+                    time:'今天 '+nowHM(),
+                    source:'行情',
+                    type: chg>=0?'动量上行':'动量下行',
+                    title: `当日涨跌幅 ${chg>=0?'+':''}${chg.toFixed(2)}%`,
+                    impact: clamp(Math.round(chg*6), -80, 80)
+                });
+            }
+            // volume attention
+            if (amt >= 1e8){
+                events.push({
+                    time:'今天 '+nowHM(),
+                    source:'行情',
+                    type:'成交活跃',
+                    title:`成交额 ${fmtAmount(amt)}（关注度提升）`,
+                    impact: clamp(20 + (amt>=5e8)*10, 10, 45)
+                });
+            }
+            // turnover
+            if (turn >= 8){
+                events.push({
+                    time:'今天 '+nowHM(),
+                    source:'行情',
+                    type:'换手偏高',
+                    title:`换手率 ${turn.toFixed(2)}%（筹码交换）`,
+                    impact: clamp(10 + (turn>=15)*10, 5, 35)
+                });
+            }
+            // volatility risk penalty
+            if (amp >= 10){
+                events.push({
+                    time:'今天 '+nowHM(),
+                    source:'风险',
+                    type:'波动上升',
+                    title:`振幅 ${amp.toFixed(2)}%（波动风险）`,
+                    impact: -clamp(Math.round(amp*3), 20, 80)
+                });
+            }
+
+            // 2) news-derived events (from current page lists)
+            const titles=[
+                ...Array.from(document.querySelectorAll('#globalNews .news-title')).map(x=>x.textContent||''),
+                ...Array.from(document.querySelectorAll('#chinaNews .news-title')).map(x=>x.textContent||''),
+            ].map(x=>x.trim()).filter(Boolean);
+
+            let matched=0
+            for(const t of titles){
+                // simple association: contains stock name / some keywords
+                const low=t.toLowerCase();
+                const name=(r.name||'').toLowerCase();
+                if ((name && low.includes(name)) || (r.name and any(token in low for token in [r.name[:2]])) ):
+                    pass
+            }
+
+            # can't run python in JS; we'll just keep generic matching in JS below
+            return events;
+        }
+
+        function renderTimeline(events){
+            if (!events || events.length===0){
+                return `<div class="events-timeline"><div style="color: var(--text-muted); padding: 10px;">暂无可关联事件（可先刷新新闻/行情）。</div></div>`;
+            }
+            const sorted=[...events].sort((a,b)=> (b.ts||0)-(a.ts||0));
+            const items=sorted.map((e,i)=>{
+                const cls=e.impact>8?'pos':e.impact<-8?'neg':'neu';
+                const tagCls=cls;
+                const width = clamp((e.impact+100)/200*100, 0, 100);
+                return `
+                    <div class="event-item" style="border-left-color:${cls==='pos'?'var(--accent-green)':cls==='neg'?'var(--accent-red)':'var(--accent-yellow)'};">
+                        <div class="event-dot" style="background:${cls==='pos'?'var(--accent-green)':cls==='neg'?'var(--accent-red)':'var(--accent-yellow)'};"></div>
+                        <div class="event-content">
+                            <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
+                                <div>
+                                    <span class="tag ${tagCls}">${e.source}·${e.type}</span>
+                                    <div style="margin-top:6px; color: var(--text-primary); font-weight:700;">${e.title}</div>
+                                    <div class="event-time">${e.time||''}</div>
+                                </div>
+                                <div style="text-align:right; min-width:110px;">
+                                    <div class="impact-score" style="color:${cls==='pos'?'var(--accent-green)':cls==='neg'?'var(--accent-red)':'var(--accent-yellow)'};">${e.impact>0?'+':''}${e.impact}</div>
+                                    <div class="impact-bar"><div class="impact-fill" style="width:${width}%;"></div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const net = sorted.reduce((a,e)=>a+(e.impact||0),0);
+            const netCls = net>10?'pos':net<-10?'neg':'neu';
+            return `
+                <div class="section-h"><div class="t">事件 Timeline</div><div class="tag ${netCls}">净影响：${net>0?'+':''}${net}</div></div>
+                <div class="events-timeline">${items}</div>
+            `;
+        }
+
+        function buildAndRenderTimeline(r){
+            // Build in JS (no external calls): market events + headline keyword association
+            const events=[];
+            const tsNow=Date.now();
+            const chg=Number(r.chgPct)||0;
+            const amp=Math.max(0,Number(r.amplitude)||0);
+            const turn=Number(r.turnover)||0;
+            const amt=Number(r.amount)||0;
+
+            if (Math.abs(chg) >= 3){
+                events.push({ts: tsNow-1, time:'今天 '+nowHM(), source:'行情', type: chg>=0?'动量上行':'动量下行', title:`当日涨跌幅 ${chg>=0?'+':''}${chg.toFixed(2)}%`, impact: clamp(Math.round(chg*6), -80, 80)});
+            }
+            if (amt >= 1e8){
+                events.push({ts: tsNow-2, time:'今天 '+nowHM(), source:'行情', type:'成交活跃', title:`成交额 ${fmtAmount(amt)}（关注度提升）`, impact: clamp(20 + (amt>=5e8?10:0), 10, 45)});
+            }
+            if (turn >= 8){
+                events.push({ts: tsNow-3, time:'今天 '+nowHM(), source:'行情', type:'换手偏高', title:`换手率 ${turn.toFixed(2)}%（筹码交换）`, impact: clamp(10 + (turn>=15?10:0), 5, 35)});
+            }
+            if (amp >= 10){
+                events.push({ts: tsNow-4, time:'今天 '+nowHM(), source:'风险', type:'波动上升', title:`振幅 ${amp.toFixed(2)}%（波动风险）`, impact: -clamp(Math.round(amp*3), 20, 80)});
+            }
+
+            const titles=[
+                ...Array.from(document.querySelectorAll('#globalNews .news-title')).map(x=>x.textContent||''),
+                ...Array.from(document.querySelectorAll('#chinaNews .news-title')).map(x=>x.textContent||''),
+            ].map(x=>x.trim()).filter(Boolean);
+
+            const name=(r.name||'').toLowerCase();
+            const code=(r.code||'').toLowerCase();
+            const kw=[];
+            if (r.market==='HK' && (r.code==='00700' || (r.name||'').includes('腾讯'))) kw.push('腾讯','tencent','游戏','微信','广告');
+            if (r.market==='CN' && (r.code==='601398' || (r.name||'').includes('工商'))) kw.push('工商','银行','利率','降息','存款','贷款');
+
+            let idx=0;
+            for (const t of titles){
+                const low=t.toLowerCase();
+                let ok = false;
+                if (name && low.includes(name)) ok = true;
+                if (!ok and code and low.includes(code)) ok = true;
+                if (!ok){
+                    for (const k of kw){ if (low.includes(k)) { ok=true; break; } }
+                }
+                if (!ok) continue;
+                const imp=headlineImpact(t);
+                if (imp==0) continue;
+                events.push({ts: tsNow-100-(idx++), time:'新闻 '+nowHM(), source:'新闻', type: imp>0?'利好':'利空', title:t, impact: imp});
+                if (idx>=6) break;
+            }
+
+            return renderTimeline(events);
+        }
+        // ===== 事件关联 END =====
 
         function selectMarketRow(renderIdx) {
             const r = (window.__renderedRows || [])[renderIdx];
