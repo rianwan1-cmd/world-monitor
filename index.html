@@ -468,10 +468,18 @@
             flex: 1;
             background: var(--bg-primary);
             border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 8px 12px;
+            border-radius: 8px;
+            padding: 10px 14px;
             color: var(--text-primary);
             font-size: 0.9em;
+            transition: all 0.2s ease;
+        }
+        
+        .stock-search input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+            background: rgba(10, 14, 23, 0.8);
         }
         
         .stock-search input::placeholder {
@@ -551,11 +559,17 @@
         .event-item {
             display: flex;
             gap: 12px;
-            padding: 12px;
+            padding: 14px;
             border-left: 3px solid var(--accent-blue);
-            background: rgba(59, 130, 246, 0.1);
-            border-radius: 6px;
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.08) 0%, rgba(59, 130, 246, 0) 100%);
+            border-radius: 8px;
             margin-bottom: 10px;
+            transition: all 0.2s ease;
+        }
+        
+        .event-item:hover {
+            border-left-color: var(--accent-cyan);
+            background: linear-gradient(90deg, rgba(6, 182, 212, 0.12) 0%, rgba(6, 182, 212, 0) 100%);
         }
         
         .event-dot {
@@ -587,6 +601,21 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 16px;
+        }
+        
+        .stock-card {
+            background: linear-gradient(135deg, var(--bg-card) 0%, rgba(17, 24, 39, 0.5) 100%);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .stock-card:hover {
+            border-color: var(--accent-blue);
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.15);
+            transform: translateY(-2px);
         }
         
         @media (max-width: 1100px) {
@@ -838,76 +867,139 @@
     </div>
     
     <script>
-        // 股票数据库
+        // 股票数据库 - 包含别名便于搜索
         const stocksDatabase = {
             'AAPL': {
                 name: '苹果公司',
+                alias: ['apple', '苹果'],
                 price: 189.45,
                 change: 2.35,
+                dayHigh: 191.20,
+                dayLow: 187.80,
+                volume: '52.3M',
+                marketCap: '2.95T',
                 events: [
-                    { time: '2分钟前', description: '发布新iPhone 16系列', impact: '+1.5%', sentiment: 'positive' },
-                    { time: '1小时前', description: '下调中国区销售预期', impact: '-0.8%', sentiment: 'negative' },
-                    { time: '3小时前', description: '与华为达成供应链协议', impact: '+0.65%', sentiment: 'positive' },
+                    { date: '2026-03-11', days: '今天', description: '发布新iPhone 16系列', impact: '+1.5%', sentiment: 'positive', category: '产品发布' },
+                    { date: '2026-03-10', days: '1天前', description: '第一财季财报超预期', impact: '+2.1%', sentiment: 'positive', category: '财报' },
+                    { date: '2026-03-08', days: '3天前', description: '下调中国区销售预期', impact: '-0.8%', sentiment: 'negative', category: '业绩预警' },
+                    { date: '2026-03-05', days: '6天前', description: '与华为达成供应链协议', impact: '+0.65%', sentiment: 'positive', category: '合作' },
+                    { date: '2026-02-28', days: '11天前', description: 'Apple Vision Pro销量突破100万', impact: '+1.2%', sentiment: 'positive', category: '产品' },
+                    { date: '2026-02-20', days: '19天前', description: '库克出席中国开发者大会', impact: '+0.45%', sentiment: 'positive', category: '活动' },
+                    { date: '2026-02-15', days: '24天前', description: '宣布30亿美元回购计划', impact: '+0.89%', sentiment: 'positive', category: '财务' },
                 ]
             },
             'TSLA': {
                 name: '特斯拉',
+                alias: ['tesla', '特斯拉'],
                 price: 242.80,
                 change: 4.15,
+                dayHigh: 247.50,
+                dayLow: 240.10,
+                volume: '78.9M',
+                marketCap: '780B',
                 events: [
-                    { time: '30分钟前', description: '马斯克宣布新型电池技术突破', impact: '+3.2%', sentiment: 'positive' },
-                    { time: '2小时前', description: '美国降低电动车补贴', impact: '-1.5%', sentiment: 'negative' },
-                    { time: '5小时前', description: '印度工厂获批扩产', impact: '+2.1%', sentiment: 'positive' },
+                    { date: '2026-03-11', days: '今天', description: '马斯克宣布新型电池技术突破', impact: '+3.2%', sentiment: 'positive', category: '技术' },
+                    { date: '2026-03-09', days: '2天前', description: '德国柏林工厂产能创新高', impact: '+1.8%', sentiment: 'positive', category: '工厂' },
+                    { date: '2026-03-06', days: '5天前', description: '美国降低电动车补贴', impact: '-1.5%', sentiment: 'negative', category: '政策' },
+                    { date: '2026-03-01', days: '10天前', description: '印度工厂获批扩产', impact: '+2.1%', sentiment: 'positive', category: '扩张' },
+                    { date: '2026-02-25', days: '14天前', description: '发布Model 3升级版', impact: '+1.5%', sentiment: 'positive', category: '产品' },
+                    { date: '2026-02-18', days: '21天前', description: '与花旗达成融资协议', impact: '+0.92%', sentiment: 'positive', category: '融资' },
+                    { date: '2026-02-10', days: '29天前', description: '推动全球自动驾驶监管合作', impact: '+0.56%', sentiment: 'positive', category: '政策' },
                 ]
             },
             'MSFT': {
                 name: '微软',
+                alias: ['microsoft', '微软'],
                 price: 428.35,
                 change: 1.85,
+                dayHigh: 431.20,
+                dayLow: 425.80,
+                volume: '21.5M',
+                marketCap: '3.20T',
                 events: [
-                    { time: '45分钟前', description: 'Azure AI服务提价', impact: '+0.9%', sentiment: 'positive' },
-                    { time: '3小时前', description: '美国反垄断审查升级', impact: '-0.6%', sentiment: 'negative' },
-                    { time: '6小时前', description: 'Copilot订阅用户突破1000万', impact: '+0.56%', sentiment: 'positive' },
+                    { date: '2026-03-11', days: '今天', description: 'Azure AI服务提价并推出新功能', impact: '+0.9%', sentiment: 'positive', category: '服务' },
+                    { date: '2026-03-08', days: '3天前', description: 'Copilot订阅用户突破5000万', impact: '+1.2%', sentiment: 'positive', category: '业绩' },
+                    { date: '2026-03-05', days: '6天前', description: '美国反垄断审查升级', impact: '-0.6%', sentiment: 'negative', category: '法律' },
+                    { date: '2026-02-28', days: '11天前', description: 'Office 365用户增长超预期', impact: '+0.78%', sentiment: 'positive', category: '业绩' },
+                    { date: '2026-02-20', days: '19天前', description: '与OpenAI扩大战略合作', impact: '+1.5%', sentiment: 'positive', category: '合作' },
+                    { date: '2026-02-15', days: '24天前', description: 'GitHub Copilot Enterprise发布', impact: '+0.85%', sentiment: 'positive', category: '产品' },
+                    { date: '2026-02-08', days: '31天前', description: '宣布30亿美元云基础设施投资', impact: '+1.1%', sentiment: 'positive', category: '投资' },
                 ]
             },
             'NVDA': {
                 name: '英伟达',
+                alias: ['nvidia', '英伟达'],
                 price: 135.62,
                 change: -2.45,
+                dayHigh: 139.80,
+                dayLow: 134.50,
+                volume: '45.2M',
+                marketCap: '3.35T',
                 events: [
-                    { time: '1小时前', description: '芯片产能预期下滑', impact: '-2.0%', sentiment: 'negative' },
-                    { time: '4小时前', description: '新款H200芯片发布延期', impact: '-0.8%', sentiment: 'negative' },
-                    { time: '1天前', description: '日本企业大单订购', impact: '+1.5%', sentiment: 'positive' },
+                    { date: '2026-03-11', days: '今天', description: '芯片产能预期下滑通知', impact: '-2.0%', sentiment: 'negative', category: '业绩预警' },
+                    { date: '2026-03-08', days: '3天前', description: '新款H200芯片发布延期', impact: '-0.8%', sentiment: 'negative', category: '产品' },
+                    { date: '2026-03-05', days: '6天前', description: '中国客户大单取消', impact: '-1.2%', sentiment: 'negative', category: '业务' },
+                    { date: '2026-02-28', days: '11天前', description: '日本企业大单订购100万颗芯片', impact: '+1.5%', sentiment: 'positive', category: '订单' },
+                    { date: '2026-02-20', days: '19天前', description: '成功推出L40S数据中心芯片', impact: '+2.3%', sentiment: 'positive', category: '产品' },
+                    { date: '2026-02-15', days: '24天前', description: '与台积电签署长期供应协议', impact: '+0.95%', sentiment: 'positive', category: '供应链' },
+                    { date: '2026-02-08', days: '31天前', description: '宣布50亿美元回购计划', impact: '+1.2%', sentiment: 'positive', category: '财务' },
                 ]
             },
             'GOOGL': {
                 name: '谷歌',
+                alias: ['google', '谷歌'],
                 price: 156.78,
                 change: 0.92,
+                dayHigh: 158.20,
+                dayLow: 155.40,
+                volume: '28.6M',
+                marketCap: '1.95T',
                 events: [
-                    { time: '2小时前', description: 'Gemini 2.0发布，性能提升显著', impact: '+1.2%', sentiment: 'positive' },
-                    { time: '3小时前', description: '欧盟数据隐私罚款增加', impact: '-0.4%', sentiment: 'negative' },
-                    { time: '1天前', description: '搜索市场份额稳定增长', impact: '+0.12%', sentiment: 'positive' },
+                    { date: '2026-03-11', days: '今天', description: 'Gemini 3.0发布，性能提升60%', impact: '+1.2%', sentiment: 'positive', category: '产品' },
+                    { date: '2026-03-09', days: '2天前', description: '宣布1000亿美元AI投资计划', impact: '+1.8%', sentiment: 'positive', category: '投资' },
+                    { date: '2026-03-07', days: '4天前', description: '欧盟数据隐私罚款新增10亿欧元', impact: '-0.4%', sentiment: 'negative', category: '法律' },
+                    { date: '2026-03-01', days: '10天前', description: '搜索引擎市场份额升至92%', impact: '+0.85%', sentiment: 'positive', category: '市场' },
+                    { date: '2026-02-25', days: '14天前', description: 'YouTube Shorts用户突破25亿', impact: '+1.1%', sentiment: 'positive', category: '业绩' },
+                    { date: '2026-02-18', days: '21天前', description: '推出新型AI芯片TPU v7', impact: '+0.9%', sentiment: 'positive', category: '产品' },
+                    { date: '2026-02-10', days: '29天前', description: '与欧盟就数据政策达成协议', impact: '+0.65%', sentiment: 'positive', category: '政策' },
                 ]
             },
             '0700.HK': {
                 name: '腾讯控股',
+                alias: ['tencent', '00700', '腾讯'],
                 price: 388.50,
                 change: 3.21,
+                dayHigh: 392.10,
+                dayLow: 386.20,
+                volume: '120.5M',
+                marketCap: '3.88T',
                 events: [
-                    { time: '1小时前', description: '游戏业务审查通过，新游上线', impact: '+2.1%', sentiment: 'positive' },
-                    { time: '3小时前', description: '中国游戏行业监管政策调整', impact: '+1.2%', sentiment: 'positive' },
-                    { time: '6小时前', description: '云服务收入同比增长快速', impact: '+0.91%', sentiment: 'positive' },
+                    { date: '2026-03-11', days: '今天', description: '游戏业务审查通过，3款新游上线', impact: '+2.1%', sentiment: 'positive', category: '业务' },
+                    { date: '2026-03-09', days: '2天前', description: '视频号日活用户突破5亿', impact: '+1.5%', sentiment: 'positive', category: '数据' },
+                    { date: '2026-03-06', days: '5天前', description: '中国游戏行业监管政策调整', impact: '+1.2%', sentiment: 'positive', category: '政策' },
+                    { date: '2026-02-28', days: '11天前', description: '云服务收入同比增长145%', impact: '+1.8%', sentiment: 'positive', category: '业绩' },
+                    { date: '2026-02-20', days: '19天前', description: '推出企业级AI助手"腾讯元宝"', impact: '+0.95%', sentiment: 'positive', category: '产品' },
+                    { date: '2026-02-15', days: '24天前', description: '与阿里建立AI合作伙伴关系', impact: '+0.85%', sentiment: 'positive', category: '合作' },
+                    { date: '2026-02-08', days: '31天前', description: '音乐业务IPO融资超预期', impact: '+2.2%', sentiment: 'positive', category: '融资' },
                 ]
             },
             '601398.SS': {
                 name: '工商银行',
+                alias: ['icbc', '工商銀行', '工商银行'],
                 price: 5.42,
                 change: 1.56,
+                dayHigh: 5.52,
+                dayLow: 5.38,
+                volume: '3.2B',
+                marketCap: '550B',
                 events: [
-                    { time: '1小时前', description: '央行注入流动性，银行收益率上升', impact: '+1.0%', sentiment: 'positive' },
-                    { time: '4小时前', description: '国务院支持大型银行投入实体经济', impact: '+0.8%', sentiment: 'positive' },
-                    { time: '1天前', description: '国际评级上调提升信心', impact: '+0.76%', sentiment: 'positive' },
+                    { date: '2026-03-11', days: '今天', description: '央行注入500亿流动性，银行收益率上升', impact: '+1.0%', sentiment: 'positive', category: '政策' },
+                    { date: '2026-03-09', days: '2天前', description: '2025年净利润同比增长12%', impact: '+0.8%', sentiment: 'positive', category: '财报' },
+                    { date: '2026-03-06', days: '5天前', description: '国务院支持大型银行投入实体经济', impact: '+0.8%', sentiment: 'positive', category: '政策' },
+                    { date: '2026-02-28', days: '11天前', description: '不良贷款率创新低至0.87%', impact: '+0.92%', sentiment: 'positive', category: '数据' },
+                    { date: '2026-02-20', days: '19天前', description: '数字人民币结算量突破10万亿', impact: '+0.76%', sentiment: 'positive', category: '业务' },
+                    { date: '2026-02-15', days: '24天前', description: '国际评级机构上调评级至AAA', impact: '+0.65%', sentiment: 'positive', category: '评级' },
+                    { date: '2026-02-08', days: '31天前', description: '宣布分红预案，现金回报率9.5%', impact: '+1.2%', sentiment: 'positive', category: '分红' },
                 ]
             }
         };
@@ -918,46 +1010,56 @@
             const resultsContainer = document.getElementById('stockResults');
             
             if (!input) {
-                resultsContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center;">请输入股票代码</p>';
+                resultsContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px;">请输入股票代码或名称</p>';
                 return;
             }
             
-            // 精确匹配或模糊搹索
+            // 搜索逻辑：代码、中文名称、英文名称、别名
             let matchedSymbol = null;
             let matchedStock = null;
             
-            // 首先尝试精确匹配（大小写不敏感）
-            const upperInput = input.toUpperCase();
-            const lowerInput = input.toLowerCase();
-            
             for (let symbol in stocksDatabase) {
-                if (symbol.toUpperCase() === upperInput || symbol === input) {
+                const stock = stocksDatabase[symbol];
+                const searchLower = input.toLowerCase();
+                
+                // 精确匹配代码
+                if (symbol.toUpperCase() === input.toUpperCase() || symbol === input) {
                     matchedSymbol = symbol;
-                    matchedStock = stocksDatabase[symbol];
+                    matchedStock = stock;
                     break;
                 }
-            }
-            
-            // 如果没找到，尝试模糊搜索（按名称）
-            if (!matchedSymbol) {
-                for (let symbol in stocksDatabase) {
-                    if (stocksDatabase[symbol].name.includes(input)) {
+                
+                // 匹配中文名称
+                if (stock.name === input || stock.name.includes(input)) {
+                    matchedSymbol = symbol;
+                    matchedStock = stock;
+                    break;
+                }
+                
+                // 匹配别名（中英文）
+                for (let alias of stock.alias) {
+                    if (alias.toLowerCase() === searchLower || alias === input) {
                         matchedSymbol = symbol;
-                        matchedStock = stocksDatabase[symbol];
+                        matchedStock = stock;
                         break;
                     }
                 }
+                
+                if (matchedSymbol) break;
             }
             
             if (matchedSymbol && matchedStock) {
                 displayStock(matchedSymbol, matchedStock, resultsContainer);
             } else {
-                const availableCodes = Object.keys(stocksDatabase).join('、');
+                const examples = ['AAPL', '苹果', '腾讯', 'TSLA', '工商银行'];
                 resultsContainer.innerHTML = `
-                    <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center;">
-                        <p style="color: var(--accent-red); margin-bottom: 12px;">❌ 未找到股票 "<strong>${input}</strong>"</p>
-                        <p style="color: var(--text-secondary); font-size: 0.85em; margin-bottom: 8px;">可用股票代码：</p>
-                        <p style="color: var(--accent-cyan); font-size: 0.85em; line-height: 1.8; font-weight: 500;">${availableCodes}</p>
+                    <div style="background: var(--bg-card); border: 2px solid var(--border); border-radius: 12px; padding: 24px; text-align: center;">
+                        <p style="color: var(--accent-red); font-size: 1.1em; margin-bottom: 12px; font-weight: 600;">❌ 未找到股票</p>
+                        <p style="color: var(--text-secondary); font-size: 0.9em; margin-bottom: 16px;">未找到与 "<strong style="color: var(--accent-cyan);">${input}</strong>" 相关的股票</p>
+                        <p style="color: var(--text-secondary); font-size: 0.85em; margin-bottom: 8px;">💡 搜索示例：</p>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;">
+                            ${examples.map(ex => `<span style="background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); padding: 6px 12px; border-radius: 6px; font-size: 0.85em; cursor: pointer;" onclick="document.getElementById('stockInput').value='${ex}'; searchStock();">${ex}</span>`).join('')}
+                        </div>
                     </div>
                 `;
             }
@@ -969,44 +1071,107 @@
             const changeSign = stock.change >= 0 ? '+' : '';
             const chartId = `priceChart-${symbol.replace(/[^a-zA-Z0-9]/g, '_')}`;
             
+            // 计算统计数据
+            const positiveEvents = stock.events.filter(e => e.sentiment === 'positive').length;
+            const negativeEvents = stock.events.filter(e => e.sentiment === 'negative').length;
+            
+            // 事件分类统计
+            const eventCategories = {};
+            stock.events.forEach(e => {
+                eventCategories[e.category] = (eventCategories[e.category] || 0) + 1;
+            });
+            
             let eventsHTML = stock.events.map((event, index) => {
                 const impactColor = event.sentiment === 'positive' ? 'var(--accent-green)' : 'var(--accent-red)';
+                const sentimentIcon = event.sentiment === 'positive' ? '📈' : '📉';
                 return `
                     <div class="event-item">
                         <div class="event-dot" style="${index === 0 ? 'background: var(--accent-cyan);' : ''}"></div>
                         <div class="event-content">
-                            <div style="color: var(--text-primary); font-weight: 500;">${event.description}</div>
-                            <div class="event-time">${event.time}</div>
-                            <div class="event-impact" style="color: ${impactColor};">${event.impact}</div>
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 4px;">
+                                <div>
+                                    <span style="color: var(--text-primary); font-weight: 500;" title="${event.date}">${event.days}</span>
+                                    <span style="background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); padding: 2px 6px; border-radius: 4px; font-size: 0.7em; margin-left: 8px;">${event.category}</span>
+                                </div>
+                                <span style="color: ${impactColor}; font-weight: 600;">${sentimentIcon} ${event.impact}</span>
+                            </div>
+                            <div style="color: var(--text-secondary);">${event.description}</div>
                         </div>
                     </div>
                 `;
             }).join('');
             
             container.innerHTML = `
-                <div class="stock-card">
-                    <div class="stock-header">
-                        <div>
-                            <div class="stock-symbol">${symbol}</div>
-                            <div style="font-size: 0.85em; color: var(--text-secondary);">${stock.name}</div>
-                        </div>
-                        <div class="stock-info">
-                            <div class="stock-price">$${stock.price.toFixed(2)}</div>
-                            <div class="stock-change" style="background: ${stock.change >= 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}; color: ${changeColor};">
-                                ${changeSign}${stock.change.toFixed(2)}%
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <!-- 主卡片 -->
+                    <div class="stock-card" style="grid-column: 1 / -1;">
+                        <div class="stock-header">
+                            <div>
+                                <div class="stock-symbol">${symbol}</div>
+                                <div style="font-size: 0.85em; color: var(--text-secondary);">${stock.name}</div>
+                            </div>
+                            <div class="stock-info">
+                                <div class="stock-price">$${stock.price.toFixed(2)}</div>
+                                <div class="stock-change" style="background: ${stock.change >= 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}; color: ${changeColor};">
+                                    ${changeSign}${stock.change.toFixed(2)}%
+                                </div>
                             </div>
                         </div>
                     </div>
                     
-                    <div style="margin-bottom: 16px;">
-                        <div style="font-size: 0.85em; color: var(--text-secondary); margin-bottom: 8px;">📈 价格走势</div>
-                        <div class="chart-container">
+                    <!-- 关键指标 -->
+                    <div class="stock-card">
+                        <div style="font-size: 0.8em; color: var(--text-secondary); margin-bottom: 12px; font-weight: 600;">📊 日内行情</div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
+                                <span style="color: var(--text-secondary);">最高</span>
+                                <span style="color: var(--accent-cyan); font-weight: 600;">$${stock.dayHigh.toFixed(2)}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
+                                <span style="color: var(--text-secondary);">最低</span>
+                                <span style="color: var(--accent-cyan); font-weight: 600;">$${stock.dayLow.toFixed(2)}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
+                                <span style="color: var(--text-secondary);">成交量</span>
+                                <span style="color: var(--accent-cyan); font-weight: 600;">${stock.volume}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
+                                <span style="color: var(--text-secondary);">市值</span>
+                                <span style="color: var(--accent-cyan); font-weight: 600;">${stock.marketCap}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 事件統計 -->
+                    <div class="stock-card">
+                        <div style="font-size: 0.8em; color: var(--text-secondary); margin-bottom: 12px; font-weight: 600;">📈 3个月事件统计</div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
+                                <span style="color: var(--accent-green);">✅ 正面事件</span>
+                                <span style="color: var(--accent-green); font-weight: 600; font-size: 1.1em;">${positiveEvents}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
+                                <span style="color: var(--accent-red);">❌ 负面事件</span>
+                                <span style="color: var(--accent-red); font-weight: 600; font-size: 1.1em;">${negativeEvents}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
+                                <span style="color: var(--accent-yellow);">📊 总事件数</span>
+                                <span style="color: var(--accent-yellow); font-weight: 600; font-size: 1.1em;">${stock.events.length}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 价格走势 -->
+                    <div class="stock-card" style="grid-column: 1 / -1;">
+                        <div style="font-size: 0.8em; color: var(--text-secondary); margin-bottom: 8px; font-weight: 600;">📈 价格走势</div>
+                        <div class="chart-container" style="height: 280px;">
                             <svg style="width: 100%; height: 100%;" id="${chartId}"></svg>
                         </div>
                     </div>
                     
-                    <div>
-                        <div style="font-size: 0.85em; color: var(--text-secondary); margin-bottom: 12px; font-weight: 600;">📰 相关事件分析</div>
+                    <!-- 事件时间线 -->
+                    <div class="stock-card" style="grid-column: 1 / -1;">
+                        <div style="font-size: 0.8em; color: var(--text-secondary); margin-bottom: 12px; font-weight: 600;">📰 重大事件时间线 (最近3个月)</div>
                         <div class="events-timeline">
                             ${eventsHTML}
                         </div>
