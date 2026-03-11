@@ -36,7 +36,7 @@
         /* 布局 */
         .app-container {
             display: grid;
-            grid-template-columns: 380px 1fr 320px;
+            grid-template-columns: 380px 1fr 520px;
             grid-template-rows: 64px 1fr;
             height: 100vh;
         }
@@ -661,6 +661,18 @@
         }
     
         .chart-box{height:160px;border-radius:12px;border:1px dashed rgba(59,130,246,0.25);background:rgba(255,255,255,0.02);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:12px;}
+
+        /* Stocks panel: use right panel space better */
+        .right-panel { overflow: hidden; }
+        #stocksPanel{height: calc(100vh - 64px); overflow:auto; padding-right: 4px;}
+        .sticky-toolbar{position: sticky; top: 0; z-index: 3;}
+        /* Stack table + detail vertically to fully use width */
+        .stocks-layout{grid-template-columns: 1fr;}
+        .stocks-table-wrap{max-height: 48vh; overflow:auto; border-radius: 14px;}
+        .stock-detail{margin-top:12px; min-height: unset;}
+
+        /* Better density */
+        .stocks-table th,.stocks-table td{padding: 10px 12px;}
     </style>
 </head>
 <body>
@@ -819,7 +831,7 @@
         <aside class="right-panel">
             <!-- 股票分析面板 -->
             <div id="stocksPanel" style="display: none;">
-                <div class="stock-toolbar">
+                <div class="stock-toolbar sticky-toolbar">
                     <div class="stock-toolbar-row">
                         <div class="stock-toolbar-title">📈 A股/港股全市场分析</div>
                         <div class="stock-toolbar-actions">
