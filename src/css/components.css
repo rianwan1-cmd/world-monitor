@@ -1,0 +1,362 @@
+/**
+ * UI组件样式
+ */
+
+/* 按钮组件 */
+.btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.9em;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  border: none;
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--accent-blue);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.btn:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
+.btn.primary {
+  background: var(--accent-blue);
+  color: white;
+  border: none;
+}
+
+.btn.primary:hover {
+  background: #2563eb;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+.btn.danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--accent-red);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.btn.danger:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 输入框组件 */
+.input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="search"],
+textarea,
+select {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--text-primary);
+  font-size: 0.9em;
+  transition: all var(--transition-fast);
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="search"]:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+input::placeholder {
+  color: var(--text-muted);
+}
+
+/* 卡片组件 */
+.card {
+  background: linear-gradient(135deg, var(--bg-card) 0%, rgba(17, 24, 39, 0.5) 100%);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  backdrop-filter: blur(10px);
+  transition: all var(--transition-normal);
+}
+
+.card:hover {
+  border-color: var(--accent-blue);
+  box-shadow: 0 8px 16px rgba(59, 130, 246, 0.1);
+  transform: translateY(-2px);
+}
+
+.card-title {
+  font-size: 1.1em;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+.card-subtitle {
+  font-size: 0.9em;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+/* 标签/徽章 */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+  border: 1px solid rgba(59, 130, 246, 0.18);
+}
+
+.badge.blue {
+  border-color: rgba(59, 130, 246, 0.35);
+  color: var(--accent-blue);
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.badge.green {
+  border-color: rgba(16, 185, 129, 0.35);
+  color: var(--accent-green);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.badge.red {
+  border-color: rgba(239, 68, 68, 0.35);
+  color: var(--accent-red);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.badge.yellow {
+  border-color: rgba(245, 158, 11, 0.35);
+  color: var(--accent-yellow);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+/* 表格 */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+thead {
+  background: rgba(59, 130, 246, 0.05);
+  border-bottom: 2px solid var(--border);
+}
+
+th {
+  padding: 14px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+tbody tr:hover {
+  background: rgba(59, 130, 246, 0.05);
+  cursor: pointer;
+}
+
+/* 网格布局 */
+.grid {
+  display: grid;
+  gap: 16px;
+}
+
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+@media (max-width: 1024px) {
+  .grid-3 { grid-template-columns: repeat(2, 1fr); }
+  .grid-4 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+}
+
+/* 加载动画 */
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(59, 130, 246, 0.2);
+  border-top-color: var(--accent-blue);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 状态提示 */
+.error {
+  color: var(--accent-red);
+  font-size: 0.9em;
+  margin-top: 4px;
+}
+
+.success {
+  color: var(--accent-green);
+  font-size: 0.9em;
+  margin-top: 4px;
+}
+
+.warning {
+  color: var(--accent-yellow);
+  font-size: 0.9em;
+  margin-top: 4px;
+}
+
+/* 对话框 */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  font-size: 1.2em;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.modal-body {
+  margin-bottom: 20px;
+  color: var(--text-secondary);
+}
+
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+/* 面板/片段 */
+.panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.panel-header {
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+.panel-body {
+  font-size: 0.9em;
+  color: var(--text-secondary);
+}
+
+/* 列表 */
+.list {
+  list-style: none;
+}
+
+.list-item {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.list-item:last-child {
+  border-bottom: none;
+}
+
+.list-item-icon {
+  width: 40px;
+  height: 40px;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  font-size: 1.2em;
+}
+
+/* 进度条 */
+.progress {
+  height: 6px;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+  border-radius: 999px;
+  transition: width var(--transition-normal);
+}
+
+/* Tooltip */
+.tooltip {
+  position: relative;
+}
+
+.tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.8em;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-fast);
+  z-index: 100;
+}
+
+.tooltip:hover::after {
+  opacity: 1;
+}

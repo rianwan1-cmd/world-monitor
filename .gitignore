@@ -1,11 +1,29 @@
-# Ignore everything
-*
+# Ignore OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# But not these files:
+# Ignore IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Ignore node_modules
+node_modules/
+package-lock.json
+
+# Keep project files
 !.gitignore
 !README.md
+!ARCHITECTURE.md
 !DEPLOY.md
 !index.html
-
-# Ignore node_modules if any
-node_modules/
+!index-new.html
+!src/
+!*.json
