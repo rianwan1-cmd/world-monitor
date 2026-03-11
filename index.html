@@ -664,14 +664,37 @@
 
         /* Stocks panel: use right panel space better */
         .right-panel { overflow: hidden; }
-        #stocksPanel{height: calc(100vh - 64px); overflow:auto; padding-right: 4px;}
+
+        /* When in stocks tab: expand to full width and use 2-column layout (list left, detail right) */
+        .app-container.stocks-mode { grid-template-columns: 1fr; }
+        .app-container.stocks-mode .right-panel { grid-column: 1 / -1; }
+
+        #stocksPanel{
+            height: calc(100vh - 64px);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding-right: 4px;
+        }
         .sticky-toolbar{position: sticky; top: 0; z-index: 3;}
-        /* Stack table + detail vertically to fully use width */
-        .stocks-layout{grid-template-columns: 1fr;}
-        .stocks-table-wrap{max-height: 48vh; overflow:auto; border-radius: 14px;}
-        .stock-detail{margin-top:12px; min-height: unset;}
+
+        .stocks-layout{
+            flex: 1;
+            min-height: 0;
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 12px;
+        }
+        .stocks-table-wrap{height: 100%; overflow:auto; border-radius: 14px;}
+        .stock-detail{height: 100%; overflow:auto; min-height: unset;}
+
+        @media (max-width: 1100px) {
+            .stocks-layout { grid-template-columns: 1fr; }
+            .stock-detail { display: none; }
+        }
 
         /* Better density */
+
         .stocks-table th,.stocks-table td{padding: 10px 12px;}
     </style>
 </head>
@@ -1619,6 +1642,7 @@
                 tab.classList.add('active');
                 
                 const tabName = tab.dataset.tab;
+                const appContainer = document.querySelector('.app-container');
                 const stocksPanel = document.getElementById('stocksPanel');
                 const otherPanel = document.getElementById('otherPanel');
                 const mapContainer = document.querySelector('.map-container');
@@ -1626,11 +1650,13 @@
                 
                 if (tabName === 'stocks') {
                     if (!window.__marketBooted) { window.__marketBooted = true; loadMarket(); }
+                    appContainer && appContainer.classList.add('stocks-mode');
                     stocksPanel.style.display = 'block';
                     otherPanel.style.display = 'none';
                     mapContainer.style.display = 'none';
                     leftPanel.style.display = 'none';
                 } else {
+                    appContainer && appContainer.classList.remove('stocks-mode');
                     stocksPanel.style.display = 'none';
                     otherPanel.style.display = 'block';
                     mapContainer.style.display = 'block';
