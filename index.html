@@ -1253,57 +1253,109 @@
             const el = document.getElementById('stockDetail');
             if (!el) return;
 
+            // --- 评分拆解（与 calcScore 同源，确保可解释）
+            const chg = Number(r.chgPct) || 0;
+            const amt = Number(r.amount) || 0;
+            const turn = Number(r.turnover) || 0;
+            const amp = Math.max(0, Number(r.amplitude) || 0);
+            const pe = Number(r.pe) || 0;
+
+            const clamp01 = (x) => Math.max(0, Math.min(1, x));
+            const m01 = clamp01((chg + 10) / 20);
+            const a01 = clamp01(Math.log10(amt + 1) / 10);
+            const t01 = clamp01(turn / 30);
+            const risk01 = clamp01(amp / 30);
+            const v01 = pe > 0 ? clamp01(1 - pe / 80) : 0.5;
+
+            const factor = {
+                momentum: Math.round(m01 * 100),
+                attention: Math.round(a01 * 100),
+                activity: Math.round(t01 * 100),
+                valuation: Math.round(v01 * 100),
+                risk: Math.round(risk01 * 100)
+            };
+
             const chgColor = r.chgPct >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
             const chgSign = r.chgPct >= 0 ? '+' : '';
-            const risk = r.amplitude || 0;
             const scoreW = Math.max(6, Math.min(100, r.score));
+            const sgn = r.signal;
 
-            const s = r.signal;
-            const riskLabel = risk >= 20 ? { t: '高波动', c: 'neg' } : risk >= 10 ? { t: '中波动', c: 'neu' } : { t: '低波动', c: 'pos' };
+            const riskLabel = amp >= 20 ? { t: '高波动', c: 'neg' } : amp >= 10 ? { t: '中波动', c: 'neu' } : { t: '低波动', c: 'pos' };
+
+            // 一句话结论（结论优先）
+            const conclusion = (() => {
+                const parts = [];
+                parts.push(r.chgPct >= 0 ? '上涨动量偏强' : '下跌压力偏大');
+                if (r.amount >= 1e8) parts.push('成交活跃');
+                if (r.turnover >= 10) parts.push('换手偏高');
+                if (amp >= 15) parts.push('波动较大需控风险');
+                return parts.join('，') + '。';
+            })();
+
+            const factorRow = (name, v, hint) => `
+                <div class="factor" title="${hint}">
+                    <div class="name">${name}</div>
+                    <div class="bar"><div style="width:${v}%;"></div></div>
+                    <div class="val">${v}</div>
+                </div>`;
 
             el.innerHTML = `
+                <!-- 顶部：股票名片 + 结论 -->
                 <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px;">
                     <div>
                         <div style="font-size:18px; font-weight:900;">${r.name}</div>
                         <div style="color: var(--text-muted); margin-top:2px;">${r.displayCode} · ${DATA_PROVIDER[r.market].name}</div>
+                        <div style="margin-top:10px;" class="chips">
+                            <span class="pill ${sgn.cls}">信号：${sgn.text}</span>
+                            <span class="pill ${riskLabel.c}">风险：${riskLabel.t}</span>
+                            <span class="pill neu">PE：${r.pe ? r.pe.toFixed(2) : '-'}</span>
+                            <span class="pill neu">PB：${r.pb ? r.pb.toFixed(2) : '-'}</span>
+                        </div>
                     </div>
                     <div style="text-align:right;">
                         <div style="font-size:22px; font-weight:900;">${r.price ? String(r.price) : '-'}</div>
                         <div style="margin-top:6px;"><span class="pill ${r.chgPct >= 0 ? 'pos' : 'neg'}">${chgSign}${r.chgPct.toFixed(2)}%</span></div>
+                        <div style="margin-top:8px; font-size:12px; color: var(--text-muted);">涨跌额：<span style="color:${chgColor}; font-weight:900;">${(r.chg >= 0 ? '+' : '') + (r.chg ? r.chg.toFixed(3) : '-') }</span></div>
                     </div>
                 </div>
 
-                <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
-                    <span class="pill ${s.cls}">信号：${s.text}</span>
-                    <span class="pill ${riskLabel.c}">风险：${riskLabel.t}</span>
-                    <span class="pill neu">PE：${r.pe ? r.pe.toFixed(2) : '-'}</span>
-                    <span class="pill neu">PB：${r.pb ? r.pb.toFixed(2) : '-'}</span>
+                <div style="margin-top:12px; padding:10px 12px; border-radius:12px; border:1px solid rgba(59,130,246,0.14); background:rgba(255,255,255,0.02);">
+                    <div style="font-weight:900; margin-bottom:4px;">一句话结论</div>
+                    <div style="color: var(--text-secondary); line-height:1.6;">${conclusion}</div>
                 </div>
 
-                <div style="margin-top:12px;">
-                    <div style="display:flex; justify-content:space-between; color: var(--text-secondary); font-size:12px;">
-                        <span>综合评分</span><span style="font-weight:900; color: var(--text-primary);">${r.score}/100</span>
-                    </div>
-                    <div class="scorebar"><div style="width:${scoreW}%;"></div></div>
-                </div>
+                <!-- 综合评分（可解释） -->
+                <div class="section-h"><div class="t">综合评分</div><div style="font-weight:900;">${r.score}/100</div></div>
+                <div class="scorebar"><div style="width:${scoreW}%;"></div></div>
 
+                <div class="section-h"><div class="t">评分拆解</div><div class="muted">0-100</div></div>
+                ${factorRow('动量', factor.momentum, '由涨跌幅映射，代表短线趋势强弱')}
+                ${factorRow('关注度', factor.attention, '由成交额对数映射，代表资金关注')}
+                ${factorRow('活跃度', factor.activity, '由换手率映射，代表筹码交换强度')}
+                ${factorRow('估值', factor.valuation, 'PE 越低分越高；无数据默认中性')}
+                ${factorRow('波动(风险)', factor.risk, '由振幅映射，越高代表风险越大（在总分里是惩罚项）')}
+
+                <!-- 图表（轻量占位，后续可升级为折线+成交额） -->
+                <div class="section-h"><div class="t">图表</div><div class="muted">轻量版</div></div>
+                <div class="chart-box">图表区域（可升级：价格走势 + 成交额）</div>
+
+                <!-- 关键指标 -->
+                <div class="section-h"><div class="t">关键指标</div><div class="muted">结构化</div></div>
                 <div class="kpi-grid">
-                    <div class="kpi"><div class="label">涨跌额</div><div class="val" style="color:${chgColor};">${(r.chg >= 0 ? '+' : '') + (r.chg ? r.chg.toFixed(3) : '-') }</div></div>
-                    <div class="kpi"><div class="label">振幅</div><div class="val">${r.amplitude ? r.amplitude.toFixed(2) + '%' : '-'}</div></div>
                     <div class="kpi"><div class="label">成交额</div><div class="val">${fmtAmount(r.amount)}</div></div>
                     <div class="kpi"><div class="label">换手率</div><div class="val">${r.turnover ? r.turnover.toFixed(2) + '%' : '-'}</div></div>
+                    <div class="kpi"><div class="label">振幅</div><div class="val">${r.amplitude ? r.amplitude.toFixed(2) + '%' : '-'}</div></div>
+                    <div class="kpi"><div class="label">成交量</div><div class="val">${fmtAmount(r.vol)}</div></div>
                 </div>
 
+                <!-- 解释与免责声明 -->
                 <div style="margin-top:12px; color: var(--text-secondary); font-size:13px; line-height:1.7;">
-                    <div style="font-weight:800; color: var(--text-primary); margin-bottom:6px;">分析要点（自动生成）</div>
+                    <div style="font-weight:900; color: var(--text-primary); margin-bottom:6px;">分析说明</div>
                     <ul style="padding-left:18px;">
-                        <li>动量：当日涨跌幅 ${chgSign}${r.chgPct.toFixed(2)}%，短线${r.chgPct >= 0 ? '偏强' : '偏弱'}。</li>
-                        <li>关注度：成交额 ${fmtAmount(r.amount)}，成交越活跃越容易形成趋势。</li>
-                        <li>活跃度：换手 ${r.turnover ? r.turnover.toFixed(2) + '%' : '-'}，高换手常伴随筹码交换与分歧。</li>
-                        <li>风险：振幅 ${r.amplitude ? r.amplitude.toFixed(2) + '%' : '-'}，振幅越大短线风险越高。</li>
-                        <li>结论：综合评分 ${r.score}/100，建议以“${s.text}”为主基调，配合仓位与止损。</li>
+                        <li>页面按“结论 → 证据(评分拆解/指标) → 细节”的顺序组织，便于快速决策与复核。</li>
+                        <li>当前为启发式评分：动量/关注度/活跃度/估值加分，波动作为风险惩罚项。</li>
                     </ul>
-                    <div style="margin-top:10px; font-size:12px; color: var(--text-muted);">声明：以上为程序化启发式分析，不构成投资建议。</div>
+                    <div style="margin-top:10px; font-size:12px; color: var(--text-muted);">声明：程序化信息展示，不构成投资建议。</div>
                 </div>
             `;
         }
