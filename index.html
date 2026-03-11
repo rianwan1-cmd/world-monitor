@@ -878,7 +878,10 @@
                         </div>
                     </div>
                     <div class="stock-toolbar-row">
-                        <input type="text" id="marketSearch" class="stock-input" placeholder="搜索：代码/名称（支持模糊）" oninput="renderTable()" />
+                        <div style="display:flex; gap:8px; align-items:center; flex:1; min-width:280px;">
+                            <input type="text" id="marketSearch" class="stock-input" placeholder="搜索：代码/名称（全市场检索，如：新易盛/300502/00700）" oninput="renderTable()" onkeypress="if(event.key==='Enter') marketSearchAll();" />
+                            <button class="btn" id="marketSearchBtn" onclick="marketSearchAll()" style="background: rgba(59,130,246,0.18); border: 1px solid rgba(59,130,246,0.25);">全市场搜索</button>
+                        </div>
                         <div class="stock-toolbar-meta" id="marketMeta">准备就绪</div>
                     </div>
                 </div>
@@ -1239,6 +1242,91 @@
                 const body = document.getElementById('marketTableBody');
                 if (body) body.innerHTML = `<tr><td colspan="8" style="color: var(--accent-red); text-align:center; padding: 18px;">加载失败（可能被网络/接口限制）。请稍后重试。</td></tr>`;
             }
+        }
+
+
+        // 全市场搜索：当目标股票不在已加载的前N页榜单时使用
+        async function marketSearchAll(){
+            const q=(document.getElementById('marketSearch')?.value||'').trim();
+            if(!q) { renderTable(); return; }
+            const meta=document.getElementById('marketMeta');
+            if(meta) meta.textContent = `全市场搜索：${q} …`;
+
+            const market=document.getElementById('marketSelect')?.value || 'CN';
+            try{
+                if (market === 'CN') await searchCN(q);
+                else await searchHK(q);
+                if(meta) meta.textContent = `已定位：${q}（点击表格行查看详情）`;
+            }catch(e){
+                console.error(e);
+                if(meta) meta.textContent = `搜索失败：${String(e)}`;
+            }
+        }
+
+        async function searchCN(q){
+            // 1) 纯数字 6 位：直接按 A 股 secid 取行情
+            if (/^\d{6}$/.test(q)){
+                await upsertBySecid(`0.${q}`);
+                return;
+            }
+            // 2) 走 suggest，用名称/拼音定位代码
+            const suggestUrl = `https://searchapi.eastmoney.com/api/suggest/get?input=${encodeURIComponent(q)}&type=14&count=10`;
+            const j = await fetch(suggestUrl).then(r=>r.json());
+            const data = j?.QuotationCodeTable?.Data || [];
+            const hit = data.find(x=>String(x?.SecurityTypeName||'').includes('A') || String(x?.Classify||'')==='AStock') || data[0];
+            if(!hit) throw new Error('未在全市场检索到该股票');
+            const code = String(hit.Code||'');
+            if(!/^\d{6}$/.test(code)) throw new Error('检索到的代码异常');
+            await upsertBySecid(`0.${code}`);
+        }
+
+        async function searchHK(q){
+            // 1) 输入 5 位数字（港股代码）
+            if (/^\d{4,5}$/.test(q)){
+                const code = String(q).padStart(5,'0');
+                // 港股在 eastmoney 常用 secid=116.xxxxx
+                await upsertBySecid(`116.${code}`);
+                return;
+            }
+            // 2) 名称 suggest
+            const suggestUrl = `https://searchapi.eastmoney.com/api/suggest/get?input=${encodeURIComponent(q)}&type=14&count=10`;
+            const j = await fetch(suggestUrl).then(r=>r.json());
+            const data = j?.QuotationCodeTable?.Data || [];
+            const hit = data.find(x=>String(x?.SecurityTypeName||'').includes('港') || String(x?.MarketType||'')==='3') || data[0];
+            if(!hit) throw new Error('未在全市场检索到该股票');
+            const code = String(hit.Code||'').padStart(5,'0');
+            await upsertBySecid(`116.${code}`);
+        }
+
+        async function upsertBySecid(secid){
+            // 用 stock/get 拉单只股票核心字段，再并入 marketRows
+            const url = `https://push2.eastmoney.com/api/qt/stock/get?secid=${encodeURIComponent(secid)}&fields=f57,f58,f43,f170,f48,f171,f173,f162,f59,f60,f116,f117,f9,f10`;
+            const j = await fetch(url).then(r=>r.json());
+            const d = j?.data;
+            if(!d) throw new Error('行情接口无返回');
+
+            const code = String(d.f57||'');
+            const name = String(d.f58||'-');
+            const price = Number(d.f43) ? Number(d.f43)/100 : 0;  // f43 价格 *100
+            const chg = Number(d.f169) ? Number(d.f169)/100 : 0;
+            const chgPct = Number(d.f170) ? Number(d.f170)/100 : 0;
+            const amount = Number(d.f48) || 0;
+            const amplitude = Number(d.f171) ? Number(d.f171)/100 : 0;
+            const turnover = Number(d.f168) ? Number(d.f168)/100 : 0;
+            const vol = Number(d.f47) || 0;
+            const pe = Number(d.f9) || 0;
+            const pb = Number(d.f10) || 0;
+
+            const market = secid.startswith('116.') ? 'HK' : 'CN';
+            const displayCode = market==='HK' ? `${code.padStart(5,'0')}.HK` : code;
+
+            const row = {market, code, displayCode, name, price, chgPct, chg, vol, amount, amplitude, turnover, pe, pb};
+            row.score = calcScore(row);
+            row.signal = signalFromScore(row.score, row.chgPct);
+
+            const idx = marketRows.findIndex(x=>x.market===market && x.code===code);
+            if(idx>=0) marketRows[idx]=row;
+            else marketRows.unshift(row);
         }
 
         function getSortedFilteredRows() {
