@@ -710,6 +710,7 @@
         }
         #stocksPanel > .stock-search {
             flex-shrink: 0;
+            height: 50px;
         }
         #stocksPanel > #stockResults {
             flex: 1;
@@ -735,16 +736,14 @@
         .sticky-toolbar{position: sticky; top: 0; z-index: 3; flex-shrink: 0;}
 
         .stocks-layout{
-            flex: 0 0 auto;
-            min-height: 0;
+            flex: 1;
+            min-height: 200px;
             display: none;
             grid-template-columns: 1.15fr 0.85fr;
             gap: 12px;
         }
         .app-container.stocks-mode .stocks-layout {
             display: grid;
-            flex: 0 0 40vh;
-            max-height: 40vh;
         }
         .stocks-table-wrap{height: 100%; overflow:auto; border-radius: 14px;}
         .stock-detail{height: 100%; overflow:auto; min-height: 0;}
