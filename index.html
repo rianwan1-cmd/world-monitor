@@ -453,6 +453,142 @@
             }
         }
         
+        /* 股票分析 */
+        .stock-search {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 16px;
+            display: flex;
+            gap: 8px;
+        }
+        
+        .stock-search input {
+            flex: 1;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: var(--text-primary);
+            font-size: 0.9em;
+        }
+        
+        .stock-search input::placeholder {
+            color: var(--text-muted);
+        }
+        
+        .stock-toggle {
+            display: none;
+        }
+        
+        .stocks-tab .map-container { display: none; }
+        .stocks-tab .left-panel { display: none; }
+        
+        .stocks-tab .right-panel {
+            grid-column: 1 / -1;
+            grid-row: 2 / 3;
+            border-left: none;
+            border-top: 1px solid var(--border);
+        }
+        
+        .stock-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .stock-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+        }
+        
+        .stock-symbol {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+        
+        .stock-info {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .stock-price {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .stock-change {
+            font-size: 0.9em;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+        
+        .chart-container {
+            height: 300px;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+            position: relative;
+        }
+        
+        .events-timeline {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 12px;
+        }
+        
+        .event-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            border-left: 3px solid var(--accent-blue);
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        
+        .event-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            margin-top: 6px;
+            flex-shrink: 0;
+        }
+        
+        .event-content {
+            flex: 1;
+            font-size: 0.85em;
+        }
+        
+        .event-time {
+            color: var(--text-muted);
+            font-size: 0.8em;
+        }
+        
+        .event-impact {
+            color: var(--accent-yellow);
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        
+        .stocks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+        
         @media (max-width: 1100px) {
             .app-container {
                 grid-template-columns: 1fr;
@@ -475,6 +611,7 @@
                 <div class="nav-tab" data-tab="tech">科技</div>
                 <div class="nav-tab" data-tab="finance">金融</div>
                 <div class="nav-tab" data-tab="commodity">大宗商品</div>
+                <div class="nav-tab" data-tab="stocks">股票分析</div>
             </div>
             <div class="header-right">
                 <div class="status-indicator">
@@ -615,6 +752,20 @@
         
         <!-- 右侧面板 -->
         <aside class="right-panel">
+            <!-- 股票分析面板 -->
+            <div id="stocksPanel" style="display: none;">
+                <div class="stock-search">
+                    <input type="text" id="stockInput" placeholder="输入股票代码 (如: AAPL, TSLA, MSFT)" />
+                    <button onclick="searchStock()" style="background: var(--accent-blue); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500;">查询</button>
+                </div>
+                
+                <div id="stockResults" class="stocks-grid">
+                    <!-- 动态生成的股票卡片 -->
+                </div>
+            </div>
+            
+            <!-- 其他面板 -->
+            <div id="otherPanel">
             <!-- AI 分析 -->
             <div class="ai-brief">
                 <div class="ai-header">
@@ -682,10 +833,241 @@
                     <div>• 更新频率: 5-30 分钟</div>
                 </div>
             </div>
+            </div>
         </aside>
     </div>
     
     <script>
+        // 股票数据库
+        const stocksDatabase = {
+            'AAPL': {
+                name: '苹果公司',
+                price: 189.45,
+                change: 2.35,
+                events: [
+                    { time: '2分钟前', description: '发布新iPhone 16系列', impact: '+1.5%', sentiment: 'positive' },
+                    { time: '1小时前', description: '下调中国区销售预期', impact: '-0.8%', sentiment: 'negative' },
+                    { time: '3小时前', description: '与华为达成供应链协议', impact: '+0.65%', sentiment: 'positive' },
+                ]
+            },
+            'TSLA': {
+                name: '特斯拉',
+                price: 242.80,
+                change: 4.15,
+                events: [
+                    { time: '30分钟前', description: '马斯克宣布新型电池技术突破', impact: '+3.2%', sentiment: 'positive' },
+                    { time: '2小时前', description: '美国降低电动车补贴', impact: '-1.5%', sentiment: 'negative' },
+                    { time: '5小时前', description: '印度工厂获批扩产', impact: '+2.1%', sentiment: 'positive' },
+                ]
+            },
+            'MSFT': {
+                name: '微软',
+                price: 428.35,
+                change: 1.85,
+                events: [
+                    { time: '45分钟前', description: 'Azure AI服务提价', impact: '+0.9%', sentiment: 'positive' },
+                    { time: '3小时前', description: '美国反垄断审查升级', impact: '-0.6%', sentiment: 'negative' },
+                    { time: '6小时前', description: 'Copilot订阅用户突破1000万', impact: '+0.56%', sentiment: 'positive' },
+                ]
+            },
+            'NVDA': {
+                name: '英伟达',
+                price: 135.62,
+                change: -2.45,
+                events: [
+                    { time: '1小时前', description: '芯片产能预期下滑', impact: '-2.0%', sentiment: 'negative' },
+                    { time: '4小时前', description: '新款H200芯片发布延期', impact: '-0.8%', sentiment: 'negative' },
+                    { time: '1天前', description: '日本企业大单订购', impact: '+1.5%', sentiment: 'positive' },
+                ]
+            },
+            'GOOGL': {
+                name: '谷歌',
+                price: 156.78,
+                change: 0.92,
+                events: [
+                    { time: '2小时前', description: 'Gemini 2.0发布，性能提升显著', impact: '+1.2%', sentiment: 'positive' },
+                    { time: '3小时前', description: '欧盟数据隐私罚款增加', impact: '-0.4%', sentiment: 'negative' },
+                    { time: '1天前', description: '搜索市场份额稳定增长', impact: '+0.12%', sentiment: 'positive' },
+                ]
+            },
+            '0700.HK': {
+                name: '腾讯控股',
+                price: 388.50,
+                change: 3.21,
+                events: [
+                    { time: '1小时前', description: '游戏业务审查通过，新游上线', impact: '+2.1%', sentiment: 'positive' },
+                    { time: '3小时前', description: '中国游戏行业监管政策调整', impact: '+1.2%', sentiment: 'positive' },
+                    { time: '6小时前', description: '云服务收入同比增长快速', impact: '+0.91%', sentiment: 'positive' },
+                ]
+            },
+            '601398.SS': {
+                name: '工商银行',
+                price: 5.42,
+                change: 1.56,
+                events: [
+                    { time: '1小时前', description: '央行注入流动性，银行收益率上升', impact: '+1.0%', sentiment: 'positive' },
+                    { time: '4小时前', description: '国务院支持大型银行投入实体经济', impact: '+0.8%', sentiment: 'positive' },
+                    { time: '1天前', description: '国际评级上调提升信心', impact: '+0.76%', sentiment: 'positive' },
+                ]
+            }
+        };
+        
+        // 搜索股票函数
+        function searchStock() {
+            const input = document.getElementById('stockInput').value.toUpperCase().trim();
+            const resultsContainer = document.getElementById('stockResults');
+            
+            if (!input) {
+                resultsContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center;">请输入股票代码</p>';
+                return;
+            }
+            
+            if (stocksDatabase[input]) {
+                displayStock(input, stocksDatabase[input], resultsContainer);
+            } else {
+                resultsContainer.innerHTML = `<p style="color: var(--accent-red); text-align: center;">未找到股票代码: ${input}</p>`;
+            }
+        }
+        
+        // 显示股票详情
+        function displayStock(symbol, stock, container) {
+            const changeColor = stock.change >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+            const changeSign = stock.change >= 0 ? '+' : '';
+            
+            let eventsHTML = stock.events.map((event, index) => {
+                const impactColor = event.sentiment === 'positive' ? 'var(--accent-green)' : 'var(--accent-red)';
+                return `
+                    <div class="event-item">
+                        <div class="event-dot" style="${index === 0 ? 'background: var(--accent-cyan);' : ''}"></div>
+                        <div class="event-content">
+                            <div style="color: var(--text-primary); font-weight: 500;">${event.description}</div>
+                            <div class="event-time">${event.time}</div>
+                            <div class="event-impact" style="color: ${impactColor};">${event.impact}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = `
+                <div class="stock-card">
+                    <div class="stock-header">
+                        <div>
+                            <div class="stock-symbol">${symbol}</div>
+                            <div style="font-size: 0.85em; color: var(--text-secondary);">${stock.name}</div>
+                        </div>
+                        <div class="stock-info">
+                            <div class="stock-price">$${stock.price.toFixed(2)}</div>
+                            <div class="stock-change" style="background: ${stock.change >= 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}; color: ${changeColor};">
+                                ${changeSign}${stock.change.toFixed(2)}%
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 16px;">
+                        <div style="font-size: 0.85em; color: var(--text-secondary); margin-bottom: 8px;">价格走势</div>
+                        <div class="chart-container">
+                            <svg style="width: 100%; height: 100%;" id="priceChart-${symbol}"></svg>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div style="font-size: 0.85em; color: var(--text-secondary); margin-bottom: 12px; font-weight: 600;">📰 相关事件分析</div>
+                        <div class="events-timeline">
+                            ${eventsHTML}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 生成简单的价格图表
+            drawPriceChart(symbol, stock.events.length);
+        }
+        
+        // 绘制价格走势图
+        function drawPriceChart(symbol, eventCount) {
+            const svg = document.getElementById(`priceChart-${symbol}`);
+            if (!svg) return;
+            
+            const width = svg.parentElement.clientWidth;
+            const height = svg.parentElement.clientHeight;
+            
+            // 生成随机但相关的价格数据
+            const points = [];
+            const basePrice = stocksDatabase[symbol].price;
+            for (let i = 0; i < 20; i++) {
+                const x = (width / 20) * i;
+                const variation = (Math.random() - 0.5) * 10;
+                const y = height - (basePrice % 50 + variation) * (height / 100);
+                points.push(`${x},${y}`);
+            }
+            
+            // 绘制背景渐变
+            const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+            gradient.setAttribute('id', `grad-${symbol}`);
+            gradient.setAttribute('x1', '0%');
+            gradient.setAttribute('y1', '0%');
+            gradient.setAttribute('x2', '0%');
+            gradient.setAttribute('y2', '100%');
+            
+            const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+            stop1.setAttribute('offset', '0%');
+            stop1.setAttribute('stop-color', 'rgba(59, 130, 246, 0.3)');
+            
+            const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+            stop2.setAttribute('offset', '100%');
+            stop2.setAttribute('stop-color', 'rgba(59, 130, 246, 0)');
+            
+            gradient.appendChild(stop1);
+            gradient.appendChild(stop2);
+            defs.appendChild(gradient);
+            svg.appendChild(defs);
+            
+            // 绘制面积
+            const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+            polyline.setAttribute('points', points.join(' '));
+            polyline.setAttribute('fill', `url(#grad-${symbol})`);
+            polyline.setAttribute('stroke', 'rgb(59, 130, 246)');
+            polyline.setAttribute('stroke-width', '2');
+            svg.appendChild(polyline);
+            
+            // 绘制事件标记点
+            for (let i = 0; i < Math.min(eventCount, 3); i++) {
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', (width / 20) * (15 + i * 2));
+                circle.setAttribute('cy', height * Math.random());
+                circle.setAttribute('r', '3');
+                circle.setAttribute('fill', i === 0 ? 'rgb(6, 182, 212)' : 'rgba(239, 68, 68, 0.6)');
+                svg.appendChild(circle);
+            }
+        }
+        
+        // 导航标签切换
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                const tabName = tab.dataset.tab;
+                const stocksPanel = document.getElementById('stocksPanel');
+                const otherPanel = document.getElementById('otherPanel');
+                const mapContainer = document.querySelector('.map-container');
+                const leftPanel = document.querySelector('.left-panel');
+                
+                if (tabName === 'stocks') {
+                    stocksPanel.style.display = 'block';
+                    otherPanel.style.display = 'none';
+                    mapContainer.style.display = 'none';
+                    leftPanel.style.display = 'none';
+                } else {
+                    stocksPanel.style.display = 'none';
+                    otherPanel.style.display = 'block';
+                    mapContainer.style.display = 'block';
+                    leftPanel.style.display = 'block';
+                }
+            });
+        });
+        
         // 初始化 3D 地球
         const world = Globe()
             .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
