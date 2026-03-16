@@ -9,207 +9,975 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/globe.gl@2.27.0/dist/globe.gl.min.js"></script>
     <script src="https://unpkg.com/d3@7"></script>
-    
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-    tailwind.config = {
-        theme: {
-            extend: {
-                colors: {
-                    apple: {
-                        bgPrimary: '#ffffff',
-                        bgSecondary: '#f5f5f7',
-                        bgTertiary: '#fbfbfd',
-                        card: 'rgba(255, 255, 255, 0.8)',
-                        elevated: 'rgba(255, 255, 255, 0.95)',
-                        border: 'rgba(0, 0, 0, 0.08)',
-                        borderStrong: 'rgba(0, 0, 0, 0.12)',
-                        separator: 'rgba(0, 0, 0, 0.1)',
-                        blue: '#0071e3',
-                        cyan: '#06c',
-                        green: '#00c853',
-                        red: '#f56565',
-                        orange: '#ff9500',
-                        yellow: '#ffcc00',
-                        textPrimary: '#1d1d1f',
-                        textSecondary: '#6e6e73',
-                        textTertiary: '#86868b',
-                    }
-                },
-                animation: {
-                    'fade-in': 'fadeIn 0.5s ease-out forwards',
-                    'slide-up': 'slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-                    'scale-in': 'scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-                    'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                    'blink': 'blink 2s ease-in-out infinite',
-                },
-                keyframes: {
-                    fadeIn: {
-                        '0%': { opacity: '0' },
-                        '100%': { opacity: '1' },
-                    },
-                    slideUp: {
-                        '0%': { opacity: '0', transform: 'translateY(10px)' },
-                        '100%': { opacity: '1', transform: 'translateY(0)' },
-                    },
-                    scaleIn: {
-                        '0%': { opacity: '0', transform: 'scale(0.95)' },
-                        '100%': { opacity: '1', transform: 'scale(1)' },
-                    },
-                    blink: {
-                        '0%, 100%': { opacity: '1' },
-                        '50%': { opacity: '0.6' },
-                    }
-                }
-            }
+    <style>
+        :root {
+            /* Apple 官网淡色系统 */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-tertiary: #fbfbfd;
+            --bg-card: rgba(255, 255, 255, 0.8);
+            --bg-elevated: rgba(255, 255, 255, 0.95);
+
+            /* Apple 官网边框和分隔线 */
+            --border: rgba(0, 0, 0, 0.08);
+            --border-strong: rgba(0, 0, 0, 0.12);
+            --separator: rgba(0, 0, 0, 0.1);
+
+            /* Apple 官网强调色 - 更柔和 */
+            --accent-blue: #0071e3;
+            --accent-cyan: #06c;
+            --accent-green: #00c853;
+            --accent-red: #f56565;
+            --accent-orange: #ff9500;
+            --accent-yellow: #ffcc00;
+            --accent-purple: #bf5af2;
+            --accent-pink: #ff2d55;
+
+            /* 淡色系文字颜色 */
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-tertiary: #86868b;
+
+            /* 淡色系阴影 */
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+            --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.16);
+
+            /* 圆角 */
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
         }
-    }
-</script>
-<style type="text/tailwindcss">
-    @layer base {
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
         body {
-            @apply bg-apple-bgSecondary text-apple-textPrimary overflow-hidden h-screen tracking-tight antialiased;
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+            position: relative;
+            letter-spacing: -0.01em;
+            font-weight: 400;
         }
+
+        /* Apple 官网风格的柔和渐变背景 */
         body::before {
             content: "";
-            @apply fixed inset-0 -z-10;
-            background: radial-gradient(circle at 20% 30%, rgba(0, 113, 227, 0.03), transparent 50%),
-                        radial-gradient(circle at 80% 20%, rgba(191, 90, 242, 0.02), transparent 50%),
-                        radial-gradient(circle at 50% 80%, rgba(0, 200, 83, 0.02), transparent 50%);
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(circle at 20% 30%, rgba(0, 113, 227, 0.03), transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(191, 90, 242, 0.02), transparent 50%),
+                radial-gradient(circle at 50% 80%, rgba(0, 200, 83, 0.02), transparent 50%);
+            z-index: -1;
         }
-    }
 
-    @layer components {
-        .app-container { @apply grid grid-cols-[340px_1fr_480px] grid-rows-[52px_1fr] h-screen gap-0 transition-all duration-500 ease-in-out; }
-        .app-container.stocks-mode { @apply grid-cols-[340px_1fr_0px]; }
+        /* 布局 */
+        .app-container {
+            display: grid;
+            grid-template-columns: 340px 1fr 480px;
+            grid-template-rows: 52px 1fr;
+            height: 100vh;
+            gap: 0;
+        }
+
+        /* 顶部导航 - Apple 官网风格 */
+        .header {
+            grid-column: 1 / -1;
+            background: rgba(255, 255, 255, 0.72);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.15em;
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1em;
+            box-shadow: 0 2px 8px rgba(0, 113, 227, 0.2);
+        }
+
+        /* Apple 官网风格的分段控制器 */
+        .nav-tabs {
+            display: flex;
+            gap: 0;
+            background: rgba(0, 0, 0, 0.04);
+            padding: 2px;
+            border-radius: 9px;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-tab {
+            padding: 6px 16px;
+            border-radius: 7px;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            color: var(--text-secondary);
+            white-space: nowrap;
+            letter-spacing: -0.01em;
+        }
+
+        .nav-tab:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-tab.active {
+            background: #ffffff;
+            color: var(--text-primary);
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            box-shadow: 0 0 8px rgba(0, 200, 83, 0.4);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.95); }
+        }
+
+        /* 左侧面板 - Apple 官网淡色风格 */
+        .left-panel {
+            background: rgba(255, 255, 255, 0.6);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 16px 12px;
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+        }
+
+        .left-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .left-panel::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .left-panel::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 3px;
+        }
+
+        .left-panel::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.25);
+        }
+
+        .panel-section {
+            margin-bottom: 20px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--separator);
+        }
+
+        .section-title {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .live-badge {
+            background: var(--accent-red);
+            color: white;
+            font-size: 0.625rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            animation: blink 2s ease-in-out infinite;
+            box-shadow: 0 0 8px rgba(245, 101, 101, 0.3);
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes slideIn {
+            0% {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 新闻列表 - Apple 官网淡色风格 */
+        .news-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .news-item {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .news-item:hover {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: var(--border-strong);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .news-item:active {
+            transform: translateY(0);
+        }
+
+        .news-source {
+            font-size: 0.6875rem;
+            color: var(--accent-blue);
+            margin-bottom: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        .news-title {
+            font-size: 0.8125rem;
+            line-height: 1.4;
+            color: var(--text-primary);
+            font-weight: 500;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .news-time {
+            font-size: 0.6875rem;
+            color: var(--text-tertiary);
+            margin-top: 6px;
+            font-weight: 400;
+        }
+
+        /* 市场数据卡片 - Apple 官网淡色风格 */
+        .market-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .market-card {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 12px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .market-card:hover {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: var(--border-strong);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .market-name {
+            font-size: 0.6875rem;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .market-price {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+
+        .market-change {
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .positive { color: var(--accent-green); }
+        .negative { color: var(--accent-red); }
+
+        /* 中间地图区域 */
+        .map-container {
+            position: relative;
+            background: var(--bg-tertiary);
+            overflow: hidden;
+        }
+
+        #globeViz {
+            width: 100%;
+            height: 100%;
+        }
+
+        #globeViz canvas {
+            display: block;
+        }
+
+        /* 地图控制按钮 - Apple 官网淡色风格 */
+        .map-controls {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .map-btn {
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .map-btn:hover {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: var(--border-strong);
+            transform: scale(1.05);
+            box-shadow: var(--shadow-md);
+        }
+
+        .map-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 地图图例 - Apple 官网淡色风格 */
+        .map-legend {
+            position: absolute;
+            bottom: 16px;
+            left: 16px;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 12px 14px;
+            font-size: 0.75rem;
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .legend-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-size: 0.6875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            color: var(--text-secondary);
+            font-size: 0.6875rem;
+        }
+
+        .legend-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            box-shadow: 0 0 6px currentColor;
+        }
+
+        /* 右侧面板 - Apple 官网淡色风格 */
+        .right-panel {
+            background: rgba(255, 255, 255, 0.6);
+            border-left: 1px solid var(--border);
+            overflow: hidden;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 52px);
+            min-height: 0;
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+        }
+
+        .right-panel > #otherPanel {
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 16px 12px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .right-panel > #otherPanel::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .right-panel > #otherPanel::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .right-panel > #otherPanel::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 3px;
+        }
+
+        .right-panel > #otherPanel::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.25);
+        }
+
+        /* AI 分析卡片 - Apple 官网淡色风格 */
+        .ai-brief {
+            background: linear-gradient(135deg, rgba(0, 113, 227, 0.04), rgba(191, 90, 242, 0.03));
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            margin-bottom: 16px;
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .ai-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .ai-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 113, 227, 0.2);
+        }
+
+        .ai-title {
+            font-weight: 600;
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
+        }
+
+        .ai-content {
+            font-size: 0.8125rem;
+            line-height: 1.5;
+            color: var(--text-secondary);
+        }
+
+        .ai-content p {
+            margin-bottom: 8px;
+        }
+
+        .ai-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* 风险指标 - Apple 官网淡色风格 */
+        .risk-meter {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            margin-bottom: 16px;
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .risk-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .risk-title {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .risk-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .risk-bar {
+            height: 6px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .risk-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 热点列表 - Apple 官网淡色风格 */
+        .hotspot-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .hotspot-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 12px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .hotspot-item:hover {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: var(--border-strong);
+            transform: translateX(4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .hotspot-location {
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .hotspot-score {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .risk-low { background: rgba(0, 200, 83, 0.12); color: var(--accent-green); }
+        .risk-medium { background: rgba(255, 149, 0, 0.12); color: var(--accent-orange); }
+        .risk-high { background: rgba(245, 101, 101, 0.12); color: var(--accent-red); }
+
+        /* 全局滚动条 - Apple 官网淡色风格 */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }
+
+        /* 响应式 */
+        @media (max-width: 1400px) {
+            .app-container {
+                grid-template-columns: 300px 1fr 400px;
+            }
+        }
         
-        .header { @apply col-span-full bg-white/70 backdrop-blur-xl border-b border-apple-border flex items-center justify-between px-5 shadow-sm; }
-        .logo { @apply flex items-center gap-2.5 text-[1.15em] font-semibold text-apple-textPrimary tracking-tight; }
-        .logo-icon { @apply w-8 h-8 rounded-md flex items-center justify-center text-[1.1em] shadow-[0_2px_8px_rgba(0,113,227,0.2)] bg-gradient-to-br from-apple-blue to-apple-cyan; }
+        /* 股票分析 */
+        .stock-search {
+            background: var(--bg-card);
+            border: 1px solid rgba(34, 211, 238, 0.18);
+            border-radius: var(--radius-md);
+            padding: 12px;
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+            box-shadow: var(--shadow-card);
+        }
         
-        .nav-tabs { @apply flex gap-0 bg-black/5 p-0.5 rounded-lg backdrop-blur-md; }
-        .nav-tab { @apply px-4 py-1.5 rounded-md text-[13px] font-medium cursor-pointer transition-all duration-300 text-apple-textSecondary whitespace-nowrap tracking-tight hover:text-apple-textPrimary; }
-        .nav-tab.active { @apply bg-white text-apple-textPrimary font-semibold shadow-sm ring-1 ring-black/5 animate-scale-in; }
+        .stock-search input {
+            flex: 1;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: var(--text-primary);
+            font-size: 0.9em;
+            transition: all 0.2s ease;
+        }
         
-        .header-right { @apply flex items-center gap-3; }
-        .status-indicator { @apply flex items-center gap-1.5 text-xs text-apple-textSecondary font-medium; }
-        .status-dot { @apply w-1.5 h-1.5 rounded-full bg-apple-green animate-pulse-slow shadow-[0_0_8px_rgba(0,200,83,0.4)]; }
+        .stock-search input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+            background: rgba(10, 14, 23, 0.8);
+        }
         
-        .left-panel, .right-panel { @apply bg-white/60 border-apple-border overflow-y-auto p-4 backdrop-blur-xl transition-all duration-500; scrollbar-width: thin; }
-        .left-panel { @apply border-r; }
-        .right-panel { @apply border-l; }
+        .stock-search input::placeholder {
+            color: var(--text-muted);
+        }
         
-        .panel-section { @apply mb-5 animate-slide-up; }
-        .section-header { @apply flex items-center justify-between mb-2.5 pb-1.5 border-b border-apple-separator; }
-        .section-title { @apply text-[11px] font-semibold uppercase tracking-wider text-apple-textSecondary flex items-center gap-1.5; }
+        .stock-toggle {
+            display: none;
+        }
         
-        .live-badge { @apply bg-apple-red text-white text-[10px] px-1.5 py-0.5 rounded font-semibold animate-blink shadow-[0_0_8px_rgba(245,101,101,0.3)]; }
+        .stocks-tab .map-container { display: none; }
+        .stocks-tab .left-panel { display: none; }
         
-        .market-grid { @apply grid grid-cols-2 gap-2.5; }
-        .market-card { @apply bg-apple-card border border-apple-border rounded-xl p-3 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:shadow-md cursor-pointer; }
-        .market-name { @apply text-xs text-apple-textSecondary mb-1; }
-        .market-price { @apply text-lg font-bold text-apple-textPrimary font-[Space_Grotesk]; }
-        .market-change { @apply text-xs font-semibold mt-1 flex items-center gap-1; }
-        .market-change.positive { @apply text-apple-green; }
-        .market-change.negative { @apply text-apple-red; }
+        .stocks-tab .right-panel {
+            grid-column: 1 / -1;
+            grid-row: 2 / 3;
+            border-left: none;
+            border-top: 1px solid var(--border);
+        }
         
-        .news-list { @apply flex flex-col gap-2; }
-        .news-item { @apply bg-white/70 border border-apple-border rounded-lg p-3 cursor-pointer transition-all duration-300 hover:bg-white hover:-translate-y-0.5 hover:shadow-sm; }
-        .news-source { @apply text-[10px] text-apple-textTertiary uppercase font-semibold tracking-wider mb-1; }
-        .news-title { @apply text-[13px] font-medium text-apple-textPrimary leading-snug mb-1.5; }
-        .news-time { @apply text-[11px] text-apple-textSecondary; }
+        .stock-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(34, 211, 238, 0.18);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin-bottom: 16px;
+        }
         
-        .map-container { @apply relative bg-black; }
-        .map-controls { @apply absolute top-4 right-4 flex flex-col gap-2 bg-white/10 backdrop-blur-md p-1.5 rounded-xl border border-white/20; }
-        .map-btn { @apply w-8 h-8 rounded-lg bg-transparent border-none text-white text-base cursor-pointer flex items-center justify-center transition-all duration-200 hover:bg-white/20; }
+        .stock-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+        }
         
-        .map-legend { @apply absolute bottom-4 left-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-3 text-white text-xs; }
-        .legend-title { @apply font-semibold mb-2 opacity-80; }
-        .legend-item { @apply flex items-center gap-2 mb-1.5 last:mb-0 opacity-90; }
-        .legend-dot { @apply w-2 h-2 rounded-full; }
+        .stock-symbol {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
         
-        .ai-brief { @apply bg-gradient-to-br from-blue-50/80 to-purple-50/80 border border-blue-100 rounded-xl p-4 shadow-sm backdrop-blur-md animate-slide-up; }
-        .ai-header { @apply flex items-center gap-2 mb-3; }
-        .ai-icon { @apply text-lg; }
-        .ai-title { @apply text-sm font-semibold text-apple-blue; }
-        .ai-content { @apply text-xs leading-relaxed text-apple-textSecondary space-y-1.5; }
+        .stock-info {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
         
-        .risk-meter { @apply bg-apple-card border border-apple-border rounded-xl p-4 mb-5 shadow-sm; }
-        .risk-header { @apply flex justify-between items-center mb-2; }
-        .risk-title { @apply text-xs font-semibold text-apple-textSecondary; }
-        .risk-value { @apply text-sm font-bold; }
-        .risk-bar { @apply h-1.5 bg-black/5 rounded-full overflow-hidden; }
-        .risk-fill { @apply h-full rounded-full transition-all duration-1000 ease-out; }
+        .stock-price {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
         
-        .hotspot-list { @apply flex flex-col gap-2; }
-        .hotspot-item { @apply flex items-center justify-between p-2.5 rounded-lg border border-apple-border bg-apple-card transition-all duration-200 hover:bg-white; }
-        .hotspot-location { @apply text-xs font-medium; }
-        .hotspot-score { @apply text-[10px] px-2 py-0.5 rounded font-semibold; }
-        .risk-high { @apply bg-apple-red/10 text-apple-red; }
-        .risk-medium { @apply bg-apple-orange/10 text-apple-orange; }
+        .stock-change {
+            font-size: 0.9em;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
         
-        /* 股票界面相关 */
-        .stock-toolbar { @apply bg-apple-elevated border-b border-apple-border p-3 backdrop-blur-xl z-20 transition-all duration-300; }
-        .sticky-toolbar { @apply sticky top-0; }
-        .stock-toolbar-row { @apply flex justify-between items-center flex-wrap gap-2.5 mb-2.5 last:mb-0; }
-        .stock-toolbar-title { @apply text-sm font-semibold text-apple-textPrimary; }
-        .stock-toolbar-actions { @apply flex gap-2; }
-        .stock-select { @apply bg-apple-bgSecondary border border-apple-border rounded-lg px-2.5 py-1 text-xs text-apple-textPrimary outline-none focus:ring-2 focus:ring-apple-blue/50; }
-        .stock-input { @apply flex-1 bg-apple-bgSecondary border border-apple-border rounded-lg px-3 py-1.5 text-xs text-apple-textPrimary outline-none transition-all duration-200 focus:bg-white focus:ring-2 focus:ring-apple-blue/50; }
-        .btn { @apply bg-white border border-apple-border rounded-lg px-3 py-1.5 text-xs font-medium cursor-pointer transition-all duration-200 shadow-sm hover:bg-gray-50 active:scale-95; }
-        .stock-toolbar-meta { @apply text-[11px] text-apple-textSecondary text-right min-w-[120px]; }
+        .chart-container {
+            height: 300px;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+            position: relative;
+            border: 1px solid rgba(34, 211, 238, 0.12);
+        }
         
-        .stocks-layout { @apply flex flex-col gap-4 p-4 lg:flex-row; }
-        .stocks-table-wrap { @apply flex-1 bg-apple-card border border-apple-border rounded-xl overflow-x-auto shadow-sm backdrop-blur-md animate-fade-in; }
-        .stocks-table { @apply w-full text-left border-collapse min-w-[600px]; }
-        .stocks-table th { @apply sticky top-0 bg-white/90 backdrop-blur-md px-3 py-2.5 text-[11px] font-semibold text-apple-textSecondary border-b border-apple-border whitespace-nowrap z-10; }
-        .stocks-table td { @apply px-3 py-2.5 text-xs border-b border-apple-separator transition-colors duration-150; }
-        .stocks-table tbody tr:hover td { @apply bg-apple-blue/5; }
+        .events-timeline {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 12px;
+        }
         
-        .stock-detail { @apply lg:w-[320px] bg-apple-card border border-apple-border rounded-xl p-4 shadow-sm backdrop-blur-md overflow-y-auto max-h-[800px] animate-slide-up; }
-        .stock-detail-empty { @apply text-xs text-apple-textTertiary text-center py-10; }
+        .event-item {
+            display: flex;
+            gap: 12px;
+            padding: 14px;
+            border-left: 3px solid var(--accent-blue);
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.08) 0%, rgba(59, 130, 246, 0) 100%);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: all 0.2s ease;
+        }
         
-        /* Tooltip and utilities */
-        .score-box { @apply inline-block px-1.5 py-0.5 rounded font-semibold text-[11px]; }
-        .score-high { @apply bg-apple-red/10 text-apple-red; }
-        .score-mid { @apply bg-apple-orange/10 text-apple-orange; }
-        .score-low { @apply bg-apple-green/10 text-apple-green; }
+        .event-item:hover {
+            border-left-color: var(--accent-cyan);
+            background: linear-gradient(90deg, rgba(6, 182, 212, 0.12) 0%, rgba(6, 182, 212, 0) 100%);
+        }
         
-        .signal-tag { @apply inline-block px-1.5 py-0.5 rounded text-[10px] font-medium mr-1 mb-1 border; }
-        .signal-buy { @apply bg-apple-red/10 border-apple-red/20 text-apple-red; }
-        .signal-sell { @apply bg-apple-green/10 border-apple-green/20 text-apple-green; }
+        .event-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            margin-top: 6px;
+            flex-shrink: 0;
+        }
         
-        /* 详情内容样式 */
-        .detail-header { @apply flex justify-between items-start mb-4 pb-3 border-b border-apple-border; }
-        .detail-title { @apply text-base font-bold text-apple-textPrimary; }
-        .detail-code { @apply text-[11px] text-apple-textTertiary font-mono; }
-        .detail-price { @apply text-xl font-bold font-[Space_Grotesk]; }
-        .detail-change { @apply text-xs font-semibold mt-1; }
+        .event-content {
+            flex: 1;
+            font-size: 0.85em;
+        }
         
-        .detail-grid { @apply grid grid-cols-2 gap-y-3 gap-x-2 mb-4; }
-        .detail-label { @apply text-[11px] text-apple-textSecondary; }
-        .detail-val { @apply text-xs font-medium text-apple-textPrimary; }
+        .event-time {
+            color: var(--text-muted);
+            font-size: 0.8em;
+        }
         
-        .chart-box { @apply h-[150px] bg-black/5 rounded-lg mb-4 flex items-center justify-center text-xs text-apple-textTertiary; }
         
-        .news-chip { @apply inline-block px-2 py-1 rounded-full text-[11px] bg-black/5 text-apple-textSecondary mr-1 mb-2 cursor-pointer transition-colors duration-200 hover:bg-black/10; }
-        .news-chip.active { @apply bg-apple-blue text-white; }
+
+        .impact{display:flex;align-items:center;gap:10px;margin-top:8px;}
+        .impact-score{font-weight:900;font-variant-numeric:tabular-nums;min-width:62px;text-align:right;}
+        .impact-bar{flex:1;height:10px;border-radius:999px;background:rgba(255,255,255,0.06);border:1px solid rgba(59,130,246,0.12);overflow:hidden;}
+        .impact-fill{height:100%;width:50%;background:linear-gradient(90deg,var(--accent-red),var(--accent-yellow),var(--accent-green));}
+        .tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:800;border:1px solid rgba(59,130,246,0.18);background:rgba(59,130,246,0.10);color:var(--accent-blue);}
+        .tag.pos{border-color: rgba(16,185,129,0.30); background: rgba(16,185,129,0.14); color: var(--accent-green);} 
+        .tag.neg{border-color: rgba(239,68,68,0.30); background: rgba(239,68,68,0.14); color: var(--accent-red);} 
+        .tag.neu{border-color: rgba(245,158,11,0.30); background: rgba(245,158,11,0.14); color: var(--accent-yellow);} 
+    .event-impact {
+            color: var(--accent-yellow);
+            font-weight: 600;
+            margin-top: 4px;
+        }
         
-        /* 模态框 */
-        .modal-overlay { @apply fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-[100] animate-fade-in; }
-        .modal-content { @apply bg-apple-elevated w-full max-w-[400px] rounded-2xl shadow-xl overflow-hidden animate-scale-in; }
-        .modal-header { @apply px-5 py-4 border-b border-apple-border flex justify-between items-center; }
-        .modal-title { @apply text-[15px] font-semibold; }
-        .modal-close { @apply w-7 h-7 rounded-full bg-black/5 flex items-center justify-center cursor-pointer transition-colors duration-200 hover:bg-black/10; }
-        .modal-body { @apply p-5 flex flex-col gap-4; }
-        .form-group { @apply flex flex-col gap-1.5; }
-        .form-label { @apply text-xs text-apple-textSecondary; }
-        .form-input { @apply bg-white border border-apple-border rounded-lg px-3 py-2 text-sm outline-none transition-all duration-200 focus:border-apple-blue focus:ring-1 focus:ring-apple-blue; }
-        .modal-footer { @apply px-5 py-4 border-t border-apple-border flex justify-end gap-2 bg-black/[0.02]; }
-        .btn-primary { @apply bg-apple-blue text-white border-transparent hover:bg-apple-blue/90; }
-    }
-</style>
+        .stocks-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .stock-card {
+            background: linear-gradient(135deg, var(--bg-card) 0%, rgba(17, 24, 39, 0.5) 100%);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .stock-card:hover {
+            border-color: var(--accent-blue);
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        @media (max-width: 1100px) {
+            .app-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 64px auto 400px auto;
+            }
+            .right-panel { display: none; }
+        }
+    
+        .divider{height:1px;background:var(--border);margin:14px 0;}
+        .stock-toolbar{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:0;backdrop-filter: blur(12px);box-shadow: var(--shadow-card);}
+        .stock-toolbar-row{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:10px;}
+        .stock-toolbar-row:last-child{margin-bottom:0;}
+        .stock-toolbar-title{font-weight:600;color:var(--text-primary);font-size:0.9375rem;letter-spacing:-0.01em;}
+        .stock-toolbar-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+        .stock-toolbar-meta{font-size:0.75rem;color:var(--text-secondary);padding:4px 10px;background:rgba(10,132,255,0.08);border-radius:8px;font-weight:500;}
+        .stock-select,.stock-input{background:rgba(255,255,255,0.9);border:1px solid var(--border);color:var(--text-primary);padding:8px 12px;border-radius:8px;outline:none;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);font-size:0.8125rem;}
+        .stock-select:hover,.stock-input:hover{border-color:var(--border-strong);background:rgba(255,255,255,0.95);}
+        .stock-select:focus,.stock-input:focus{border-color:var(--accent-blue);background:rgba(255,255,255,1);box-shadow:0 0 0 3px rgba(0,113,227,0.15);}
+        .stock-input{min-width:280px;flex:1;}
+        .btn{background:var(--accent-blue);color:#fff;border:0;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);font-size:0.8125rem;}
+        .btn:hover{background:var(--accent-cyan);transform:scale(1.02);}
+        .btn:active{transform:scale(0.98);}
+        .stocks-table-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:auto;backdrop-filter:blur(10px);}
+        .stocks-table{width:100%;border-collapse:collapse;font-size:0.8125rem;table-layout:auto;}
+        .stocks-table thead{background:rgba(255,255,255,0.5);backdrop-filter:blur(8px);position:sticky;top:0;z-index:2;}
+        .stocks-table th{padding:10px 12px;border-bottom:1px solid var(--separator);font-weight:600;color:var(--text-secondary);text-transform:uppercase;font-size:0.6875rem;letter-spacing:0.06em;white-space:nowrap;}
+        .stocks-table td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text-primary);white-space:nowrap;}
+        .stocks-table tbody tr{cursor:pointer;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);position:relative;}
+        .stocks-table tbody tr:hover{background:rgba(0,113,227,0.06);}
+        .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:6px;font-weight:600;font-size:0.75rem;border:1px solid transparent;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);}
+        .pill.pos{background:rgba(48,209,88,0.15);color:var(--accent-green);border-color:rgba(48,209,88,0.2);}
+        .pill.neg{background:rgba(255,69,58,0.15);color:var(--accent-red);border-color:rgba(255,69,58,0.2);}
+        .pill.neu{background:rgba(255,159,10,0.15);color:var(--accent-orange);border-color:rgba(255,159,10,0.2);}
+        .stock-detail{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;min-height:320px;backdrop-filter:blur(10px);}
+        .stock-detail-empty{color:var(--text-secondary);padding:40px 20px;text-align:center;font-size:0.8125rem;line-height:1.6;}
+        .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;}
+        .kpi{background:rgba(255,255,255,0.6);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);}
+        .kpi:hover{background:rgba(255,255,255,0.8);border-color:var(--border-strong);transform:translateY(-2px);box-shadow:var(--shadow-sm);}
+        .kpi .label{font-size:0.6875rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;}
+        .kpi .val{font-size:1.125rem;font-weight:700;margin-top:6px;color:var(--accent-blue);letter-spacing:-0.02em;}
+        .scorebar{height:6px;background:rgba(0,0,0,0.08);border-radius:3px;overflow:hidden;margin-top:8px;}
+        .scorebar>div{height:100%;background:linear-gradient(90deg,var(--accent-red),var(--accent-orange),var(--accent-green));width:50%;transition:width 0.6s cubic-bezier(0.4,0,0.2,1);}
+
+        .chart-box{height:160px;border-radius:12px;border:1px dashed rgba(0,113,227,0.25);background:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:12px;}
+
+        /* When in stocks tab: expand to full width and use 2-column layout (list left, detail right) */
+        .app-container.stocks-mode { grid-template-columns: 1fr; }
+        .app-container.stocks-mode .right-panel { grid-column: 1 / -1; }
+        .app-container.stocks-mode #otherPanel { display: none; }
+        .app-container.stocks-mode #stocksPanel { flex: 1; }
+
+        #stocksPanel{
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            gap: 16px;
+        }
+        #stocksPanel > .sticky-toolbar {
+            flex-shrink: 0;
+            max-height: 140px;
+            overflow: visible;
+        }
+        #stocksPanel > .holdings-section {
+            flex-shrink: 0;
+            max-height: 350px;
+        }
+        #stocksPanel > .stocks-layout {
+            flex: 1;
+            min-height: 400px;
+            overflow: hidden;
+        }
+        .sticky-toolbar{position: sticky; top: 0; z-index: 3; flex-shrink: 0;}
+
+        .stocks-layout{
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 14px;
+            height: 100%;
+        }
+        .app-container:not(.stocks-mode) .stocks-layout {
+            display: none;
+        }
+        .stocks-table-wrap{height: 100%; overflow:auto; border-radius: 14px;}
+        .stock-detail{height: 100%; overflow:auto; min-height: 0;}
+        .stock-detail::-webkit-scrollbar{width:8px;}
+        .stock-detail::-webkit-scrollbar-track{background:rgba(0,0,0,0.2);border-radius:10px;}
+        .stock-detail::-webkit-scrollbar-thumb{background:linear-gradient(180deg, rgba(59,130,246,0.4), rgba(34,211,238,0.3));border-radius:10px;border:2px solid transparent;background-clip:padding-box;}
+        .stock-detail::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg, rgba(59,130,246,0.6), rgba(34,211,238,0.5));background-clip:padding-box;}
+        .stocks-table-wrap::-webkit-scrollbar{width:8px;}
+        .stocks-table-wrap::-webkit-scrollbar-track{background:rgba(0,0,0,0.2);border-radius:10px;}
+        .stocks-table-wrap::-webkit-scrollbar-thumb{background:linear-gradient(180deg, rgba(59,130,246,0.35), rgba(34,211,238,0.25));border-radius:10px;border:2px solid transparent;background-clip:padding-box;}
+        .stocks-table-wrap::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg, rgba(59,130,246,0.55), rgba(34,211,238,0.45));background-clip:padding-box;}
+
+        @media (max-width: 1100px) {
+            .stocks-layout {
+                grid-template-columns: 1fr !important;
+            }
+            .stock-detail {
+                display: none !important;
+            }
+        }
+
+        /* Better density and table alignment */
+        .stocks-table th{padding: 10px 12px;}
+        .stocks-table td{padding: 10px 12px;}
+        .stocks-table td[style*="text-align:right"],
+        .stocks-table th[style*="text-align:right"]{text-align:right !important;}
+        .stocks-table td[style*="text-align:center"],
+        .stocks-table th[style*="text-align:center"]{text-align:center !important;}
+
+        .score-row{display:grid;grid-template-columns: 1fr 1.2fr;gap:14px;margin-top:14px;}
+        .score-card{background:linear-gradient(135deg, rgba(255,255,255,0.8), rgba(255,255,255,0.6));border:1px solid rgba(0,113,227,0.15);border-radius:14px;padding:14px;transition:all 0.2s ease;}
+        .score-card:hover{border-color:rgba(0,113,227,0.3);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,113,227,0.15);}
+        .chart-container-mini{height:280px;border-radius:12px;background:rgba(255,255,255,0.5);border:1px solid rgba(0,113,227,0.12);overflow:hidden;}
+        @media (max-width: 1100px){.score-row{grid-template-columns:1fr;}}
+    
+        /* Linked news */
+        .news-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+        .news-chip{cursor:pointer;user-select:none;display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:900;border:1px solid rgba(0,113,227,0.18);background:rgba(0,113,227,0.10);color:var(--accent-blue);}
+        .news-chip.active{border-color: rgba(0,102,204,0.35); background: rgba(0,102,204,0.14); color: var(--accent-cyan);}
+        .linked-news{margin-top:10px;display:flex;flex-direction:column;gap:8px;}
+        .linked-news-item{padding:10px 12px;border-radius:12px;border:1px solid rgba(0,113,227,0.12);background:rgba(255,255,255,0.5);}
+        .linked-news-title{font-weight:800;color:var(--text-primary);line-height:1.35;}
+        .linked-news-meta{margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--text-muted);}
+        .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:900;border:1px solid rgba(0,113,227,0.18);}
+        .badge.finance{border-color: rgba(0,113,227,0.35); color: var(--accent-blue); background: rgba(0,113,227,0.10);}
+        .badge.company{border-color: rgba(0,200,83,0.35); color: var(--accent-green); background: rgba(0,200,83,0.10);}
+        .badge.politics{border-color: rgba(245,158,11,0.35); color: var(--accent-yellow); background: rgba(245,158,11,0.10);}
+        .badge.relevance{border-color: rgba(148,163,184,0.25); color: var(--text-secondary); background: rgba(148,163,184,0.08);}
+        </style>
 </head>
 <body>
     <div class="app-container">

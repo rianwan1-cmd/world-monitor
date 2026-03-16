@@ -22,8 +22,10 @@ export class WorldMonitorApp {
     this.eventManager = new EventManager();
     
     // 初始化服务
-    this.marketService = new MarketService(CONFIG.API.EAST_MONEY);
+    this.marketService = new MarketService(CONFIG.API.BAOSTOCK);
     this.marketService.initializeStockDatabase(STOCK_DATABASE);
+    // 将内置股票数据库暴露到全局，供旧版页面或回退逻辑使用
+    try { window.stocksDatabase = STOCK_DATABASE; } catch(e) { /* non-browser or sandboxed env */ }
   }
   
   /**
@@ -139,6 +141,48 @@ export class WorldMonitorApp {
     // 状态变化监听
     stateManager.subscribe('state:changed', (state) => {
       this.onStateChanged(state);
+    });
+
+    // 全局委托：点击股票名称时，尝试展示右侧详情（兼容旧版 inline selectMarketRow）
+    document.addEventListener('click', (ev) => {
+      try {
+        const nameEl = ev.target.closest && ev.target.closest('.stock-name');
+        if (!nameEl) return;
+
+        const codeOrDisplay = nameEl.getAttribute('data-code') || nameEl.textContent.trim();
+
+        // 优先使用全局旧实现（如果存在）
+        if (typeof window.selectMarketRow === 'function') {
+          // 尝试在渲染数组中查找索引
+          const rows = window.__renderedRows || [];
+          const idx = rows.findIndex(r => (r.displayCode && r.displayCode === codeOrDisplay) || (r.code && r.code === codeOrDisplay) || (r.name && r.name === nameEl.textContent.trim()));
+          if (idx >= 0) {
+            window.selectMarketRow(idx);
+            return;
+          }
+        }
+
+        // 回退到 MarketService 获取详情并手动渲染到 #stockDetail（简化版）
+        const code = String(codeOrDisplay).replace(/\.HK$/i, '').trim();
+        const detail = this.marketService.getStockDetail(code) || window.stocksDatabase && window.stocksDatabase[code];
+        const el = document.getElementById('stockDetail');
+        if (!el) return;
+
+        if (detail) {
+          el.innerHTML = `
+            <div style="padding:12px;">
+              <div style="font-size:18px;font-weight:800;">${detail.name || code}</div>
+              <div style="color:var(--text-muted); margin-top:6px;">${code}</div>
+              <div style="margin-top:12px;">价格：${detail.price ?? '-'} &nbsp; 涨跌：${detail.change ?? '-'}</div>
+              <div style="margin-top:8px; color:var(--text-secondary);">来源：快速回退展示</div>
+            </div>
+          `;
+        } else {
+          el.innerHTML = `<div style="padding:12px;color:var(--text-muted);">未能获取到该股票详情：${codeOrDisplay}</div>`;
+        }
+      } catch (e) {
+        console.warn('click handler error', e);
+      }
     });
   }
   

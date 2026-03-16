@@ -109,30 +109,53 @@ export class MarketService extends DataService {
    * 搜索股票
    */
   searchStock(query) {
+    // 优先使用 API 搜索
+    return this.searchStockFromAPI(query).catch(() => {
+      // API 失败时使用本地搜索
+      return this.searchStockLocal(query);
+    });
+  }
+
+  /**
+   * 从 API 搜索股票
+   */
+  async searchStockFromAPI(query) {
+    const response = await this.fetch(`${this.apiEndpoint}/search?q=${encodeURIComponent(query)}`);
+    return response.map(item => ({
+      code: item.code.replace(/^(sh|sz)\./, ''),
+      name: item.code_name,
+      market: item.code.startsWith('sh.') ? 'SH' : 'SZ'
+    }));
+  }
+
+  /**
+   * 本地搜索股票
+   */
+  searchStockLocal(query) {
     const upperQuery = query.toUpperCase();
     const results = [];
-    
+
     for (const [code, stock] of this.stockDatabase.entries()) {
       // 按代码匹配
       if (code.includes(upperQuery)) {
         results.push({ code, ...stock });
         continue;
       }
-      
+
       // 按中文名称匹配
       if (stock.name.includes(query)) {
         results.push({ code, ...stock });
         continue;
       }
-      
+
       // 按别名匹配
-      if (stock.alias && stock.alias.some(a => 
+      if (stock.alias && stock.alias.some(a =>
         a.toLowerCase().includes(query.toLowerCase())
       )) {
         results.push({ code, ...stock });
       }
     }
-    
+
     return results;
   }
   
@@ -144,17 +167,15 @@ export class MarketService extends DataService {
   }
   
   /**
-   * 从东方财富API获取市场数据
+   * 从 Baostock API 获取市场数据
    */
   async fetchMarketData(market = 'CN') {
     return this.fetchWithCache(`market_${market}`, async () => {
       try {
-        const response = await this.fetch(this.apiEndpoint, {
-          params: { market }
-        });
+        const response = await this.fetch(`${this.apiEndpoint}/market?market=${market}`);
         return response;
       } catch (error) {
-        console.warn('Failed to load market data from API, using local data');
+        console.warn('Failed to load market data from Baostock API, using local data');
         return this.getLocalMarketData(market);
       }
     });

@@ -6,6 +6,7 @@
 export const CONFIG = {
   // API端点
   API: {
+    BAOSTOCK: 'http://localhost:5000/api',
     EAST_MONEY: 'https://api.eastmoney.com/ec/querystock/getstockinfos',
     MARKET_API: 'https://push2his.eastmoney.com/nmispv13/qstock',
   },
